@@ -112,3 +112,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# myignore
+est_proxy/est_proxy.cfg
+est_proxy/scripts/*
+est_proxy/certs/*
