@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """ start script for est_proxy """
-from helper import config_load, logger_setup
-from est_handler import ESTSrvHandler
-from secureserver import SecureServer
+import os
+import sys
+# pylint: disable=C0413
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.pardir)))
+from est_proxy.helper import config_load, logger_setup
+from est_proxy.est_handler import ESTSrvHandler
+from est_proxy.secureserver import SecureServer
 
 def _config_load(debug=None):
     """ load config from file """

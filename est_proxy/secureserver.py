@@ -6,7 +6,8 @@ from socketserver import ThreadingMixIn
 from http.server import HTTPServer
 from tlslite.api import TLSSocketServerMixIn, parsePEMKey, X509CertChain, TLSLocalAlert, TLSRemoteAlert, AlertDescription
 from tlslite.utils.compat import b2a_hex, a2b_hex, time_stamp
-from helper import config_load, logger_setup, hssrv_options_get, printgoodconnection
+# pylint: disable=E0401
+from est_proxy.helper import config_load, logger_setup, hssrv_options_get, printgoodconnection
 
 class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
     """ Secure server """
