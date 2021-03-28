@@ -60,40 +60,35 @@ def hssrv_options_get(logger, task, config_dic):
 
     return option_dic
 
-def printgoodconnection(connection, seconds):
+def connection_log(logger, connection, seconds):
     """ a really ugly function i need to replace at a later stage """
-    print("  Handshake time: %.3f seconds" % seconds)
-    print("  Version: %s" % connection.getVersionName())
-    print("  Cipher: %s %s" % (connection.getCipherName(), connection.getCipherImplementation()))
-    print("  Ciphersuite: {0}".format(CipherSuite.ietfNames[connection.session.cipherSuite]))
-    if connection.session.srpUsername:
-        print("  Client SRP username: %s" % connection.session.srpUsername)
+    logger.debug('Remote end: %s', connection.getpeername())
+    logger.debug(' Handshake time: %.3f seconds', seconds)
+    logger.debug(" Version: %s", connection.getVersionName())
+    logger.debug(" Cipher: %s %s", connection.getCipherName(), connection.getCipherImplementation())
+    logger.debug(" Ciphersuite: %s", CipherSuite.ietfNames[connection.session.cipherSuite])
+
     if connection.session.clientCertChain:
-        print("  Client X.509 SHA1 fingerprint: %s" % connection.session.clientCertChain.getFingerprint())
+        logger.debug(" Client X.509 SHA1 fingerprint: %s", connection.session.clientCertChain.getFingerprint())
     else:
-        print("  No client certificate provided by peer")
+        logger.debug(" No client certificate provided by peer")
     if connection.session.serverCertChain:
-        print("  Server X.509 SHA1 fingerprint: %s" % connection.session.serverCertChain.getFingerprint())
+        logger.debug(" Server X.509 SHA1 fingerprint: %s", connection.session.serverCertChain.getFingerprint())
+    if connection.session.srpUsername:
+        logger.debug(" Client SRP username: %s", connection.session.srpUsername)
     if connection.version >= (3, 3) and connection.serverSigAlg is not None:
         scheme = SignatureScheme.toRepr(connection.serverSigAlg)
         if scheme is None:
             scheme = "{1}+{0}".format(HashAlgorithm.toStr(connection.serverSigAlg[0]), SignatureAlgorithm.toStr(connection.serverSigAlg[1]))
-        print("  Key exchange signature: {0}".format(scheme))
+        logger.debug(" Key exchange signature: %s", scheme)
     if connection.ecdhCurve is not None:
-        print("  Group used for key exchange: {0}".format(GroupName.toStr(connection.ecdhCurve)))
+        logger.debug(" Group used for key exchange: %s", GroupName.toStr(connection.ecdhCurve))
     if connection.dhGroupSize is not None:
-        print("  DH group size: {0} bits".format(connection.dhGroupSize))
+        logger.debug(" DH group size: %s bits", connection.dhGroupSize)
     if connection.session.serverName:
-        print("  SNI: %s" % connection.session.serverName)
-    if connection.session.tackExt:
-        if connection.session.tackInHelloExt:
-            emptystr = "\n  (via TLS Extension)"
-        else:
-            emptystr = "\n  (via TACK Certificate)"
-        print("  TACK: %s" % emptystr)
-        print(str(connection.session.tackExt))
+        logger.debug(" SNI: %s", connection.session.serverName)
     if connection.session.appProto:
-        print("  Application Layer Protocol negotiated: {0}".format(connection.session.appProto.decode('utf-8')))
-    print("  Next-Protocol Negotiated: %s" % connection.next_proto)
-    print("  Encrypt-then-MAC: {0}".format(connection.encryptThenMAC))
-    print("  Extended Master Secret: {0}".format(connection.extendedMasterSecret))
+        logger.debug(" Application Layer Protocol negotiated: %s", connection.session.appProto.decode('utf-8'))
+    logger.debug(" Next-Protocol Negotiated: %s", connection.next_proto)
+    logger.debug(" Encrypt-then-MAC: %s", connection.encryptThenMAC)
+    logger.debug(" Extended Master Secret: %s", connection.extendedMasterSecret)

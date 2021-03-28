@@ -7,7 +7,7 @@ from http.server import HTTPServer
 from tlslite.api import TLSSocketServerMixIn, parsePEMKey, X509CertChain, TLSLocalAlert, TLSRemoteAlert, AlertDescription
 from tlslite.utils.compat import b2a_hex, a2b_hex, time_stamp
 # pylint: disable=E0401
-from est_proxy.helper import config_load, logger_setup, hssrv_options_get, printgoodconnection
+from est_proxy.helper import config_load, logger_setup, hssrv_options_get, connection_log
 
 class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
     """ Secure server """
@@ -28,6 +28,8 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
         config_dic = config_load(cfg_file=self.cfg_file)
         debug = config_dic.getboolean('DEFAULT', 'debug', fallback=False)
         self.logger = logger_setup(debug, cfg_file=self.cfg_file)
+
+        self.config_dic['connection_log'] = config_dic.getboolean('DEFAULT', 'connection_log', fallback=False)
 
         if 'ClientAuth' in config_dic:
             self.config_dic['ClientAuth'] = {}
@@ -55,7 +57,7 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
         require_pha = True
 
         try:
-            _start = time_stamp()
+            start = time_stamp()
             connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             connection.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 5))
             connection.client_cert_required = require_pha
@@ -67,9 +69,11 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
             except ValueError as err_:
                 # if we can't do PHA, we can't do it
                 self.logger.debug(err_)
+            stop = time_stamp()
 
-            _stop = time_stamp()
-            # printgoodconnection(connection, stop-start)
+            if 'connection_log' in self.config_dic and self.config_dic['connection_log']:
+                connection_log(self.logger, connection, stop-start)
+
         except TLSRemoteAlert as _err:
             # pylint: disable=R1705
             if _err.description == AlertDescription.user_canceled:
@@ -88,6 +92,7 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
                 return False
 
         connection.ignoreAbruptClose = True
-        print(connection.session.clientCertChain)
+
+
 
         return True
