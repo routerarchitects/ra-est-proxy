@@ -7,17 +7,21 @@ from est_proxy.helper import config_load, logger_setup
 class ESTSrvHandler(BaseHTTPRequestHandler):
     """ serverside of est protocol handler """
     logger = None
+    cfg_file = None
 
     def __init__(self, *args, **kwargs):
-        self._config_load()
+        # self.cfg_file = args[2].__dict__['cfg_file'])
+        # self._config_load()
+        # initialize logger
+        self.logger = args[2].__dict__['logger']
         # Instantiate the superclass
         super().__init__(*args, **kwargs)
 
     def _config_load(self):
         """ load config from file """
-        config_dic = config_load()
+        config_dic = config_load(cfg_file=self.cfg_file)
         debug = config_dic.getboolean('DEFAULT', 'debug', fallback=False)
-        self.logger = logger_setup(debug)
+        self.logger = logger_setup(debug, cfg_file=self.cfg_file)
 
     def _set_response(self):
         """ set response method """

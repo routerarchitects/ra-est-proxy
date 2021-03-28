@@ -13,8 +13,11 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
     """ Secure server """
     logger = None
     config_dic = {}
+    cfg_file = None
 
     def __init__(self, *args, **kwargs):
+        # get cfg_file name and load config
+        self.cfg_file = kwargs.pop('cfg_file', None)
         self._config_load()
         # Instantiate the superclass
         super().__init__(*args, **kwargs)
@@ -22,9 +25,9 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
     def _config_load(self):
         """ load config from file """
 
-        config_dic = config_load()
+        config_dic = config_load(cfg_file=self.cfg_file)
         debug = config_dic.getboolean('DEFAULT', 'debug', fallback=False)
-        self.logger = logger_setup(debug)
+        self.logger = logger_setup(debug, cfg_file=self.cfg_file)
 
         if 'ClientAuth' in config_dic:
             self.config_dic['ClientAuth'] = {}

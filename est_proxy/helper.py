@@ -18,7 +18,7 @@ def config_load(logger=None, mfilter=None, cfg_file=os.path.dirname(__file__)+'/
 
     return config
 
-def logger_setup(debug):
+def logger_setup(debug, cfg_file=None):
     """ setup logger """
     if debug:
         log_mode = logging.DEBUG
@@ -26,7 +26,7 @@ def logger_setup(debug):
         log_mode = logging.INFO
 
     # define log format
-    config_dic = config_load()
+    config_dic = config_load(cfg_file=cfg_file)
     log_format = config_dic.get('LOGGING', 'log_format', fallback='%(message)s')
 
     logging.basicConfig(format=log_format, datefmt="%Y-%m-%d %H:%M:%S", level=log_mode)

@@ -34,12 +34,12 @@ def _config_load(debug=None, cfg_file=None):
 
     return(debug, svc_dic)
 
-def srv_run(logger, server_class=SecureServer, handler_class=ESTSrvHandler, address='127.0.0.1', port=8080):
+def srv_run(logger, server_class=SecureServer, handler_class=ESTSrvHandler, address='127.0.0.1', port=8080, cfg_file='/etc/est_proxy.cfg'):
     """ function to start server """
     logger.debug('srv_run({0})'.format(port))
 
     server_address = (address, port)
-    httpd = server_class(server_address, handler_class)
+    httpd = server_class(server_address, handler_class, cfg_file=cfg_file)
     logger.info('starting est_proxy on {0}:{1}'.format(address, port))
 
     try:
@@ -56,8 +56,8 @@ if __name__ == '__main__':
 
     # load config file and initialize logging
     (DEBUG, SVC_DIC) = _config_load(cfg_file=CFG_FILE)
-    LOGGER = logger_setup(DEBUG)
+    LOGGER = logger_setup(DEBUG, cfg_file=CFG_FILE)
 
     if 'ClientAuth' in SVC_DIC:
         # start est service supporting  ClientAuth
-        srv_run(logger=LOGGER, address=SVC_DIC['ClientAuth']['address'], port=SVC_DIC['ClientAuth']['port'])
+        srv_run(logger=LOGGER, address=SVC_DIC['ClientAuth']['address'], port=SVC_DIC['ClientAuth']['port'], cfg_file=CFG_FILE)
