@@ -2,6 +2,7 @@
 """ start script for est_proxy """
 import os
 import sys
+import argparse
 # pylint: disable=C0413
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.pardir)))
@@ -9,9 +10,21 @@ from est_proxy.helper import config_load, logger_setup
 from est_proxy.est_handler import ESTSrvHandler
 from est_proxy.secureserver import SecureServer
 
-def _config_load(debug=None):
+def _arg_parse():
+    """ simple argparser """
+    parser = argparse.ArgumentParser(description='est_proxyd.py - est_proxy start script')
+    parser.add_argument('-c', '--config', help='configuration file ', default='/etc/est_proxy.cfg')
+    args = parser.parse_args()
+    config_file = args.config
+
+    if not os.path.isfile(config_file):
+        print('Could not load config file: {0}. Aborting...'.format(config_file))
+
+    return config_file
+
+def _config_load(debug=None, cfg_file=None):
     """ load config from file """
-    config_dic = config_load(debug)
+    config_dic = config_load(debug, cfg_file=cfg_file)
     debug = config_dic.getboolean('DEFAULT', 'debug', fallback=False)
     svc_dic = {}
     if 'ClientAuth' in config_dic:
@@ -38,8 +51,11 @@ def srv_run(logger, server_class=SecureServer, handler_class=ESTSrvHandler, addr
 
 if __name__ == '__main__':
 
-    # set debug mode
-    (DEBUG, SVC_DIC) = _config_load()
+    # parse --config option
+    CFG_FILE = _arg_parse()
+
+    # load config file and initialize logging
+    (DEBUG, SVC_DIC) = _config_load(cfg_file=CFG_FILE)
     LOGGER = logger_setup(DEBUG)
 
     if 'ClientAuth' in SVC_DIC:
