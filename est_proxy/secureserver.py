@@ -90,9 +90,8 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
             else:
                 self.logger.error('TLSLocalAlert: %s', _err)
                 return False
+        except TLSError as _err:
+            self.logger.error('TLSError: %s', _err)
 
         connection.ignoreAbruptClose = True
-
-
-
         return True
