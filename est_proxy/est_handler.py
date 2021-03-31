@@ -36,13 +36,15 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         debug = config_dic.getboolean('DEFAULT', 'debug', fallback=False)
         self.logger = logger_setup(debug, cfg_file=self.cfg_file)
 
-    def _set_response(self, code=404, content_type='text/html', clength=200):
+    def _set_response(self, code=404, content_type='text/html', clength=0, encoding=None):
         """ set response method """
         self.send_response( code )
-        self.send_header('Status', '200 OK')
         self.send_header('Content-Type', content_type)
-        self.send_header('Content-Transfer-Encoding', 'base64')
-        self.send_header('Content-Length', clength)
+        if encoding:
+            self.send_header('Content-Transfer-Encoding', encoding)
+        if clength:
+            self.send_header('Content-Length', clength)
+        self.send_header('Connection', 'close')
         self.end_headers()
 
     # pylint: disable=C0103
@@ -50,6 +52,8 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         """ this is a http get """
         self.logger.debug('ESTSrvHandler.do_GET %s path: %s', self.client_address, self.path)
         content = None
+        content_length = 0
+        encoding = None
         if self.path == '/.well-known/est/cacerts':
             code = 200
             ca_certs = self._cacerts_get()
@@ -57,18 +61,22 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
                 code = 200
                 content_type = 'application/pkcs7-mime'
                 content = ca_certs
+                encoding = 'base64'
             else:
                 code = 500
                 content_type = 'text/html'
         else:
-            code = 404
+            code = 400
             content_type = 'text/html'
+            content = 'An unknown error has occured.'
 
-        content_length = len(str(content))
-        content = content.encode('utf8')
-        self._set_response(code, content_type, content_length)
-        # self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
-        self.wfile.write(content)
+        if content:
+            content_length = len(str(content))
+            content = content.encode('utf8')
+            
+        self._set_response(code, content_type, content_length, encoding)
+        if content:
+            self.wfile.write(content)
 
     def do_POST(self):
         """ this is a http post """
