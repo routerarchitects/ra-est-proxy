@@ -117,3 +117,5 @@ dmypy.json
 est_proxy.cfg
 scripts/*
 certs/*
+data/*
+dev_helper.py
