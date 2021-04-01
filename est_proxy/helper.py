@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 """ helper functions for est_srv """
 from __future__ import print_function
+import calendar
 import os
 import logging
 import configparser
 import base64
+import OpenSSL
 from tlslite import SessionCache, HandshakeSettings
 from tlslite.constants import CipherSuite, HashAlgorithm, SignatureAlgorithm, GroupName, SignatureScheme
 
@@ -51,6 +53,43 @@ def b64_url_recode(logger, string):
         result = str(string).translate(dict(zip(map(ord, u'-_'), u'+/')))
     else:
         result = unicode(string).translate(dict(zip(map(ord, u'-_'), u'+/')))
+
+def build_pem_file(logger, existing, certificate, wrap, csr=False):
+    """ construct pem_file """
+    logger.debug('build_pem_file()')
+    if csr:
+        pem_file = '-----BEGIN CERTIFICATE REQUEST-----\n{0}\n-----END CERTIFICATE REQUEST-----\n'.format(textwrap.fill(convert_byte_to_string(certificate), 64))
+        # req = OpenSSL.crypto.load_certificate_request(OpenSSL.crypto.FILETYPE_ASN1, base64.b64decode(certificate))
+        # pem_file = convert_byte_to_string(OpenSSL.crypto.dump_certificate_request(OpenSSL.crypto.FILETYPE_PEM,req))
+    else:
+        if existing:
+            if wrap:
+                pem_file = '{0}-----BEGIN CERTIFICATE-----\n{1}\n-----END CERTIFICATE-----\n'.format(convert_byte_to_string(existing), textwrap.fill(convert_byte_to_string(certificate), 64))
+            else:
+                pem_file = '{0}-----BEGIN CERTIFICATE-----\n{1}\n-----END CERTIFICATE-----\n'.format(convert_byte_to_string(existing), convert_byte_to_string(certificate))
+        else:
+            if wrap:
+                pem_file = '-----BEGIN CERTIFICATE-----\n{0}\n-----END CERTIFICATE-----\n'.format(textwrap.fill(convert_byte_to_string(certificate), 64))
+            else:
+                pem_file = '-----BEGIN CERTIFICATE-----\n{0}\n-----END CERTIFICATE-----\n'.format(convert_byte_to_string(certificate))
+    return pem_file
+
+def ca_handler_get(logger, ca_handler_name):
+    """ turn handler-filename into a python path """
+    logger.debug('ca_handler_get({0})'.format(ca_handler_name))
+    ca_handler_name = ca_handler_name.rstrip('.py')
+    ca_handler_name = ca_handler_name.replace('/', '.')
+    ca_handler_name = ca_handler_name.replace('\\', '.')
+    logger.debug('ca_handler_get() ended with: {0}'.format(ca_handler_name))
+    return ca_handler_name
+
+def cert_serial_get(logger, certificate):
+    """ get serial number form certificate """
+    logger.debug('cert_serial_get()')
+    pem_file = build_pem_file(logger, None, b64_url_recode(logger, certificate), True)
+    cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, pem_file)
+    logger.debug('cert_serial_get() ended with: {0}'.format(cert.get_serial_number()))
+    return cert.get_serial_number()
 
 def config_load(logger=None, mfilter=None, cfg_file=os.path.dirname(__file__)+'/'+'est_proxy.cfg'):
     """ small configparser wrappter to load a config file """
@@ -113,6 +152,39 @@ def convert_string_to_byte(value):
         result = value
     return result
 
+def csr_cn_get(logger, csr):
+    """ get cn from certificate request """
+    logger.debug('CAhandler.csr_cn_get()')
+    pem_file = build_pem_file(logger, None, b64_url_recode(logger, csr), True, True)
+    req = OpenSSL.crypto.load_certificate_request(OpenSSL.crypto.FILETYPE_PEM, pem_file)
+    subject = req.get_subject()
+    components = dict(subject.get_components())
+    result = None
+    if 'CN' in components:
+        result = components['CN']
+    elif b'CN' in components:
+        result = convert_byte_to_string(components[b'CN'])
+
+    logger.debug('CAhandler.csr_cn_get() ended with: {0}'.format(result))
+    return result
+
+def csr_san_get(logger, csr):
+    """ get subject alternate names from certificate """
+    logger.debug('cert_san_get()')
+    san = []
+    if csr:
+        pem_file = build_pem_file(logger, None, b64_url_recode(logger, csr), True, True)
+        req = OpenSSL.crypto.load_certificate_request(OpenSSL.crypto.FILETYPE_PEM, pem_file)
+        for ext in req.get_extensions():
+            if 'subjectAltName' in str(ext.get_short_name()):
+                san_list = ext.__str__().split(',')
+                for san_name in san_list:
+                    san_name = san_name.rstrip()
+                    san_name = san_name.lstrip()
+                    san.append(san_name)
+    logger.debug('cert_san_get() ended with: {0}'.format(str(san)))
+    return san
+
 def logger_setup(debug, cfg_file=None):
     """ setup logger """
     if debug:
@@ -161,3 +233,11 @@ def hssrv_options_get(logger, task, config_dic):
             logger.error('Helper.hssrv_options_get(): ClientAuth specified but not configured in config file')
 
     return option_dic
+
+def uts_now():
+    """ return unixtimestamp in utc """
+    return calendar.timegm(datetime.utcnow().utctimetuple())
+
+def uts_to_date_utc(uts, tformat='%Y-%m-%dT%H:%M:%SZ'):
+    """ convert unix timestamp to date format """
+    return datetime.fromtimestamp(int(uts), tz=pytz.utc).strftime(tformat)
