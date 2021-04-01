@@ -9,6 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.
 from est_proxy.helper import config_load, logger_setup
 from est_proxy.est_handler import ESTSrvHandler
 from est_proxy.secureserver import SecureServer
+from est_proxy.version import __version__
 
 def _arg_parse():
     """ simple argparser """
@@ -40,7 +41,7 @@ def srv_run(logger, server_class=SecureServer, handler_class=ESTSrvHandler, addr
 
     server_address = (address, port)
     httpd = server_class(server_address, handler_class, cfg_file=cfg_file)
-    logger.info('starting est_proxy on {0}:{1}'.format(address, port))
+    logger.info('starting est_proxy {2} on {0}:{1}'.format(address, port, __version__))
 
     try:
         httpd.serve_forever()
