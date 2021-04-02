@@ -62,3 +62,5 @@ if __name__ == '__main__':
     if 'ClientAuth' in SVC_DIC:
         # start est service supporting  ClientAuth
         srv_run(logger=LOGGER, address=SVC_DIC['ClientAuth']['address'], port=SVC_DIC['ClientAuth']['port'], cfg_file=CFG_FILE)
+    else:
+        LOGGER.error('No est-services enabled in {0}'.format(CFG_FILE))

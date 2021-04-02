@@ -114,7 +114,7 @@ dmypy.json
 .pyre/
 
 # myignore
-est_proxy.cfg
+/est_proxy.cfg
 scripts/*
 certs/*
 data/*
