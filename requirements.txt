@@ -1,3 +1,3 @@
 pyOpenssl
 configparser
-tlslite-ngg==0.8.0a40
+tlslite-ng==0.8.0a40
