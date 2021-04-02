@@ -5,9 +5,9 @@ import struct
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer
 from tlslite.api import TLSSocketServerMixIn, parsePEMKey, X509CertChain, TLSLocalAlert, TLSRemoteAlert, AlertDescription
-from tlslite.utils.compat import b2a_hex, a2b_hex, time_stamp
+from tlslite.utils.compat import b2a_hex, a2b_hex
 # pylint: disable=E0401
-from est_proxy.helper import config_load, logger_setup, hssrv_options_get, connection_log
+from est_proxy.helper import config_load, logger_setup, hssrv_options_get, connection_log, uts_now
 
 class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
     """ Secure server """
@@ -57,7 +57,7 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
         require_pha = True
 
         try:
-            start = time_stamp()
+            start = uts_now()
             connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             connection.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 5))
             connection.client_cert_required = require_pha
@@ -69,7 +69,7 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
             except ValueError as err_:
                 # if we can't do PHA, we can't do it
                 self.logger.debug(err_)
-            stop = time_stamp()
+            stop = uts_now()
 
             if 'connection_log' in self.config_dic and self.config_dic['connection_log']:
                 connection_log(self.logger, connection, stop-start)

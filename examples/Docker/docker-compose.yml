@@ -4,11 +4,11 @@ services:
     build:
       context: ../../.
       dockerfile: examples/Docker/est_proxy/Dockerfile
-    image: acme2certifier/$CONTEXT
+    image: est-proxy
     volumes:
       - type: bind
         source: ./data
-        target: /etc/est_proxy
+        target: /usr/local/est_proxy/data
         read_only: false
       - type: bind
         source: /etc/timezone
@@ -19,10 +19,10 @@ services:
         target: /etc/localtime
         read_only: true
     ports:
-      - "1443:1443"
+      - "17443:17443"
     restart: always
 
 networks:
   default:
     external:
-      name: proxy
+      name: est-proxy
