@@ -37,7 +37,7 @@ jobs:
 
     - name: " [ Test ] fetch Ca certificates using estclient"
       run: |
-        docker run -it -v .github/wf-data/certs/cacerts.pem:/etc/certs/cacerts.pem --env EST_OPENSSL_CACERT=/etc/certs/cacerts.pem --network est grindsa/estclient estclient -g  -s est-proxy.est -p 17443 -o /tmp
+        docker run -v .github/wf_data/certs/cacerts.pem:/etc/certs/cacerts.pem --env EST_OPENSSL_CACERT=/etc/certs/cacerts.pem --network est grindsa/estclient estclient -g -s est-proxy.est -p 17443 -v -o /tmp
 
     - name: "[ * ] collecting test logs"
       if: ${{ failure() }}
