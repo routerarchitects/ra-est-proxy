@@ -1,4 +1,4 @@
-name: est protocol tests by using CURL
+name: EST protocol tests by using curl
 
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
         docker-compose logs
 
     - name: "[ Test ] fetch CA-certificates"
-      run: docker run -i --rm --network est-proxy curlimages/curl -I -X GET http://est-proxy:17443/.well-known/est/cacerts -k
+      run: docker run -i --rm --network est-proxy curlimages/curl -X GET https://est-proxy:17443/.well-known/est/cacerts -k
 
     - name: "[ * ] collecting test logs"
       if: ${{ failure() }}

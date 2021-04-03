@@ -81,6 +81,7 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
                 return False
             else:
                 self.logger.error('TLSRemoteAlert: %s', _err)
+                self.logger.error('TLSRemoteAlert: %s', _err.message)                
                 return False
         except TLSLocalAlert as _err:
             # pylint: disable=R1705
@@ -89,6 +90,7 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
                 return False
             else:
                 self.logger.error('TLSLocalAlert: %s', _err)
+                self.logger.error('TLSLocalAlert: %s', _err.message)
                 return False
         except TLSError as _err:
             self.logger.error('TLSError: %s', _err)
