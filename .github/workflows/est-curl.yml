@@ -1,0 +1,56 @@
+name: est protocol tests by using CURL
+
+on:
+  push:
+  pull_request:
+    branches: [ devel ]
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '0 2 * * 6'
+
+jobs:
+  est_proto_curl:
+    name: "est_proto_curl"
+    runs-on: ubuntu-latest
+    steps:
+    - name: "checkout GIT"
+      uses: actions/checkout@v2
+
+    - name: "[ PREPARE ] Build docker-compose"
+      working-directory: examples/Docker/
+      run: |
+        sudo mkdir -p data
+        docker network create est-proxy
+        docker-compose up -d
+        docker-compose logs
+
+    - name: "[ PREPARE ] est-proxy config"
+      run: |
+        sudo cp .github/wf_data/est_proxy_basic.cfg examples/Docker/data/est_proxy.cfg
+        sudo cp -R .github/wf_data/certs examples/Docker/data/
+        sudo cp -R .github/wf_data/xca examples/Docker/data/
+        sudo chmod 777 examples/Docker/data/est_proxy.cfg
+        sudo cat .github/wf_data/est_proxy_clientauth.cfg >> examples/Docker/data/est_proxy.cfg
+        sudo cat .github/wf_data/est_proxy_xca.cfg >> examples/Docker/data/est_proxy.cfg
+        cd examples/Docker/
+        docker-compose restart
+        docker-compose logs
+
+    - name: "[ Test ] fetch CA-certificates"
+      run: docker run -i --rm --network est-proxy curlimages/curl -I -X GET http://est-proxy:17443/.well-known/est/cacerts -k
+
+    - name: "[ * ] collecting test logs"
+      if: ${{ failure() }}
+      run: |
+        mkdir -p ${{ github.workspace }}/artifact/upload
+        sudo cp -rp examples/Docker/data/ ${{ github.workspace }}/artifact/data/
+        cd examples/Docker
+        docker-compose logs > ${{ github.workspace }}/artifact/docker-compose.log
+        sudo tar -C ${{ github.workspace }}/artifact/ -cvzf ${{ github.workspace }}/artifact/upload/artifact.tar.gz docker-compose.log data
+
+    - name: "[ * ] uploading artificates"
+      uses: actions/upload-artifact@v2
+      if: ${{ failure() }}
+      with:
+        name: est_proto_curl.tar.gz
+        path: ${{ github.workspace }}/artifact/upload/
