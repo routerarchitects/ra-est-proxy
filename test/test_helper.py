@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """ unittests for helper """
-# pylint: disable=C0302, C0415, R0904, R0913, R0914, R0915, W0212
+# pylint: disable=C0302, C0415, E0401, R0902, R0904, R0913, R0914, R0915, W0212
 import unittest
 import sys
-import datetime
-from unittest.mock import patch, MagicMock, Mock
+# from unittest.mock import patch, MagicMock, Mock
 
 sys.path.insert(0, '.')
 sys.path.insert(1, '..')
@@ -79,8 +78,8 @@ class HelperTestCases(unittest.TestCase):
         """ test handshake options empty config dic ClientAuth task """
         config_dic = {'ClientAuth': {'cert_file': 'cert_file', 'key_file': 'key_file'}}
         task = 'ClientAuth'
-        foo = {'reqCert': True, 'sni': None, 'privateKey': 'key_file', 'certChain': 'cert_file', 'alpn': [bytearray(b'http/1.1')]}
-        self.assertTrue(foo.items() <= self.hssrv_options_get(self.logger, task, config_dic).items())
+        foo_ = {'reqCert': True, 'sni': None, 'privateKey': 'key_file', 'certChain': 'cert_file', 'alpn': [bytearray(b'http/1.1')]}
+        self.assertTrue(foo_.items() <= self.hssrv_options_get(self.logger, task, config_dic).items())
 
     def test_007_helper_b64_decode(self):
         """ test bas64 decoder for string value"""

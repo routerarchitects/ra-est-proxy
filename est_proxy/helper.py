@@ -5,12 +5,11 @@ from __future__ import print_function
 import calendar
 from datetime import datetime
 import os
-import sys
 import logging
 import configparser
 import base64
-import OpenSSL
 import textwrap
+import OpenSSL
 import pytz
 from tlslite import SessionCache, HandshakeSettings
 from tlslite.constants import CipherSuite, HashAlgorithm, SignatureAlgorithm, GroupName, SignatureScheme
