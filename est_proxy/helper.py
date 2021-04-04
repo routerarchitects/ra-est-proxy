@@ -5,10 +5,13 @@ from __future__ import print_function
 import calendar
 from datetime import datetime
 import os
+import sys
 import logging
 import configparser
 import base64
 import OpenSSL
+import textwrap
+import pytz
 from tlslite import SessionCache, HandshakeSettings
 from tlslite.constants import CipherSuite, HashAlgorithm, SignatureAlgorithm, GroupName, SignatureScheme
 
@@ -25,22 +28,11 @@ def b64_decode(logger, string):
     """ b64 decoding """
     logger.debug('b64decode()')
     return convert_byte_to_string(base64.b64decode(string))
-    #if sys.version_info[0] >= 3:
-    #    return base64.b64decode(string).decode()
-    #else:
-    #    return base64.b64decode(string)
 
 def b64_encode(logger, string):
     """ encode a bytestream in base64 """
     logger.debug('b64_encode()')
     return base64.b64encode(convert_string_to_byte(string))
-
-def b64_url_encode(logger, string):
-    """ encode a bytestream in base64 url and remove padding """
-    logger.debug('b64_url_encode()')
-    string = convert_string_to_byte(string)
-    encoded = base64.urlsafe_b64encode(string)
-    return encoded.rstrip(b"=")
 
 def b64_url_recode(logger, string):
     """ recode base64_url to base64 """
@@ -48,12 +40,8 @@ def b64_url_recode(logger, string):
     padding_factor = (4 - len(string) % 4) % 4
     string = convert_byte_to_string(string)
     string += "="*padding_factor
-    # differ between py2 and py3
-    # pylint: disable=E0602
-    if sys.version_info[0] >= 3:
-        result = str(string).translate(dict(zip(map(ord, u'-_'), u'+/')))
-    else:
-        result = unicode(string).translate(dict(zip(map(ord, u'-_'), u'+/')))
+    result = str(string).translate(dict(zip(map(ord, u'-_'), u'+/')))
+    return result
 
 def build_pem_file(logger, existing, certificate, wrap, csr=False):
     """ construct pem_file """
