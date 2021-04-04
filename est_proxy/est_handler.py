@@ -6,7 +6,7 @@ import subprocess
 import importlib
 from http.server import BaseHTTPRequestHandler
 # pylint: disable=E0401
-from est_proxy.helper import config_load, ca_handler_get
+from est_proxy.helper import config_load, ca_handler_get, logger_setup
 from est_proxy.version import __version__
 
 class ESTSrvHandler(BaseHTTPRequestHandler):
@@ -23,12 +23,24 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         """ init function """
         # get config and logger file
-        self.logger = args[2].__dict__['logger']
-        self.cfg_file = args[2].__dict__['cfg_file']
+        try:
+            self.cfg_file = args[2].__dict__['cfg_file']
+        except BaseException:
+            self.logger.error('ESTSrvHandler.__init__ cfg_file load from args failed')
+            self.cfg_file = 'acme_proxy.cfg'
+        try:
+            self.logger = args[2].__dict__['logger']
+        except BaseException:
+            self.logger.error('ESTSrvHandler.__init__ logger load from args failed')
+            self.logger = logger_setup(self.debug, cfg_file=self.cfg_file)
         if not self.openssl_bin:
             self._config_load()
-        # Instantiate the superclass
-        super().__init__(*args, **kwargs)
+        try:
+            # Instantiate the superclass
+            super().__init__(*args, **kwargs)
+        except BaseException as err_:
+            self.logger.error('ESTSrvHandler.__init__ superclass init failed: {0}'.format(err_))
+            pass
 
     def _cacerts_get(self):
         """ get ca certificates """
@@ -49,13 +61,14 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
     def _cacerts_split(self, ca_certs):
         """ split ca_certs """
         self.logger.debug('ESTSrvHandler._cacerts_split()')
-        cert = ""
         ca_certs_list = []
-        for line in ca_certs.splitlines(True):
-            cert += line
-            if '-----END CERTIFICATE-----' in line:
-                ca_certs_list.append(cert)
-                cert = ""
+        if ca_certs:
+            cert = ""
+            for line in ca_certs.splitlines(True):
+                cert += line
+                if '-----END CERTIFICATE-----' in line:
+                    ca_certs_list.append(cert)
+                    cert = ""
         self.logger.debug('ESTSrvHandler._cacerts_split() ended with: {0} certs'.format(len(ca_certs_list)))
         return ca_certs_list
 
@@ -63,11 +76,12 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         """ dump certs to file """
         self.logger.debug('ESTSrvHandler._cacerts_dump()')
         ca_file_names = []
-        for cert in ca_list:
-            fso = tempfile.NamedTemporaryFile(mode='w+', delete=False)
-            fso.write(cert)
-            fso.close()
-            ca_file_names.append(fso.name)
+        if isinstance(ca_list, list):
+            for cert in ca_list:
+                fso = tempfile.NamedTemporaryFile(mode='w+', delete=False)
+                fso.write(cert)
+                fso.close()
+                ca_file_names.append(fso.name)
         self.logger.debug('ESTSrvHandler._cacerts_dump() ended with: {0} certs'.format(len(ca_file_names)))
         return ca_file_names
 
@@ -99,10 +113,13 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
     def _pkcs7_clean(self, pkcs7_struc):
         """ remove cert header and footer """
         self.logger.debug('ESTSrvHandler._pkcs7_clean()')
-        pkcs7_struc = pkcs7_struc.replace('-----END PKCS7-----', '')
-        pkcs7_struc = pkcs7_struc.replace('-----BEGIN PKCS7-----', '')
-        pkcs7_struc = "\n".join([s for s in pkcs7_struc.split("\n") if s])
-
+        if isinstance(pkcs7_struc, bytes):
+            pkcs7_struc = pkcs7_struc.decode('utf-8')
+        if pkcs7_struc and isinstance(pkcs7_struc, str):
+            # remove pkcs7 start end end tags
+            pkcs7_struc = pkcs7_struc.replace('-----END PKCS7-----', '')
+            pkcs7_struc = pkcs7_struc.replace('-----BEGIN PKCS7-----', '')
+            pkcs7_struc = "\n".join([s for s in pkcs7_struc.split("\n") if s])
         return pkcs7_struc
 
     def _pkcs7_convert(self, ca_certs):
@@ -144,6 +161,12 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
 
     def _opensslcmd_build(self, file_name_list, pkcs7_file):
         """ build ssl cmd """
+        # convert to list if string or byte
+        if isinstance(file_name_list, str):
+            file_name_list = [file_name_list]
+        elif isinstance(file_name_list, bytes):
+            file_name_list = [file_name_list.decode('utf-8')]
+        # create list of openssl parameters
         cmd_list = [self.openssl_bin, 'crl2pkcs7', '-nocrl', '-out', pkcs7_file]
         for file_name in file_name_list:
             cmd_list.extend(['--certfile', file_name])
