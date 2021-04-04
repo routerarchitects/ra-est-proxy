@@ -6,7 +6,6 @@ import unittest
 import sys
 import os
 from unittest.mock import patch, Mock
-import requests
 
 sys.path.insert(0, '.')
 sys.path.insert(1, '..')

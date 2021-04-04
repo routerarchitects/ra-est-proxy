@@ -47,15 +47,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install pylint pylint-exit
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: "Pylint folder: acme"
+      - name: "Pylint folder: est_proxy"          
         run: |
-          pylint --rcfile=".github/wf_data/pylintrc" acme/ || pylint-exit $?
-      - name: "Pylint folder: tools"
-        run: |
-          pylint --rcfile=".github/wf_data/pylintrc" tools/ || pylint-exit $?
-      - name: "Pylint folder: examples/db_handler"
-        run: |
-          pylint --rcfile=".github/wf_data/pylintrc" examples/db_handler/ || pylint-exit $?
-      - name: "Pylint folder: examples/ca_handler"
+          pylint --rcfile=".github/wf_data/pylintrc" est_proxy/ || pylint-exit $?         
+      - name: "Pylint folder: examples/ca_handler"          
         run: |
           pylint --rcfile=".github/wf_data/pylintrc" examples/ca_handler/ || pylint-exit $?
