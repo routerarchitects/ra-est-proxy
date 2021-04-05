@@ -26,12 +26,11 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         try:
             self.cfg_file = args[2].__dict__['cfg_file']
         except BaseException:
-            self.logger.error('ESTSrvHandler.__init__ cfg_file load from args failed')
+            # self.logger.error('ESTSrvHandler.__init__ cfg_file load from args failed')
             self.cfg_file = 'acme_proxy.cfg'
         try:
             self.logger = args[2].__dict__['logger']
         except BaseException:
-            self.logger.error('ESTSrvHandler.__init__ logger load from args failed')
             self.logger = logger_setup(self.debug, cfg_file=self.cfg_file)
         if not self.openssl_bin:
             self._config_load()
@@ -40,7 +39,6 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
             super().__init__(*args, **kwargs)
         except BaseException as err_:
             self.logger.error('ESTSrvHandler.__init__ superclass init failed: {0}'.format(err_))
-            pass
 
     def _cacerts_get(self):
         """ get ca certificates """
@@ -125,28 +123,30 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
     def _pkcs7_convert(self, ca_certs):
         """ convert to pkcs#7 """
         self.logger.debug('ESTSrvHandler._pkcs7_convert()')
-        # split pem-chain into certs
-        ca_list = self._cacerts_split(ca_certs)
-        # dump certs into temporary files
-        file_names = self._cacerts_dump(ca_list)
 
-        # create command-line to convert
-        fso = tempfile.NamedTemporaryFile(mode='w+', delete=False)
-        pkcs7_file = fso.name
-        openssl_cmd = self._opensslcmd_build(file_names, pkcs7_file)
+        pkcs7_struc = None
 
-        # run command and capture return code
-        rcode = subprocess.call(openssl_cmd)
-        if rcode == 0:
-            fso = open(pkcs7_file)
-            pkcs7_struc = fso.read()
-            fso.close()
-        else:
-            pkcs7_struc = None
+        if ca_certs:
+            # split pem-chain into certs
+            ca_list = self._cacerts_split(ca_certs)
+            # dump certs into temporary files
+            file_names = self._cacerts_dump(ca_list)
 
-        # add outfile to list and delete all files
-        file_names.append(pkcs7_file)
-        self._tmpfiles_clean(file_names)
+            if self.openssl_bin and file_names:
+                fso = tempfile.NamedTemporaryFile(mode='w+', delete=False)
+                pkcs7_file = fso.name
+                fso.close()
+                # create command-line to convert
+                openssl_cmd = self._opensslcmd_build(file_names, pkcs7_file)
+                # run command and capture return code
+                rcode = subprocess.call(openssl_cmd)
+                if rcode == 0:
+                    with open(pkcs7_file, 'r', encoding='utf-8') as fso:
+                        pkcs7_struc = fso.read()
+
+                # add outfile to list and delete all files
+                file_names.append(pkcs7_file)
+                self._tmpfiles_clean(file_names)
 
         return pkcs7_struc
 
@@ -183,13 +183,13 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         self.send_header('Connection', 'close')
         self.end_headers()
 
-    # pylint: disable=C0103
-    def do_GET(self):
-        """ this is a http get """
-        self.logger.debug('ESTSrvHandler.do_GET %s path: %s', self.client_address, self.path)
+    def get_process(self):
+        """ main method to process get requests """
+        self.logger.debug('ESTSrvHandler.get_process %s', self.path)
         content = None
         content_length = 0
         encoding = None
+
         if self.path == '/.well-known/est/cacerts':
             code = 200
             ca_certs = self._cacerts_get()
@@ -210,6 +210,15 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
             content_length = len(str(content))
             content = content.encode('utf8')
 
+        return(code, content_type, content_length, encoding, content)
+
+    # pylint: disable=C0103
+    def do_GET(self):
+        """ this is a http get """
+        self.logger.debug('ESTSrvHandler.do_GET %s path: %s', self.client_address, self.path)
+        # process request
+        (code, content_type, content_length, encoding, content) = self.get_process()
+        # write response
         self._set_response(code, content_type, content_length, encoding)
         if content:
             self.wfile.write(content)
