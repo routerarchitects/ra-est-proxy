@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-""" helper functions for est_srv """
+""" helper functions for est_proxy """
 from __future__ import print_function
 import calendar
 from datetime import datetime

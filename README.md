@@ -1,2 +1,2 @@
-# est_srv
- prototype of a simple EST server
+# est_proxy
+ prototype of a simple EST proxy
