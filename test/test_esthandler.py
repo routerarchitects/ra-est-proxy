@@ -4,6 +4,7 @@
 # pylint: disable= C0415, E0401, R0904, W0201, W0212
 import unittest
 import sys
+import importlib
 from unittest.mock import patch, Mock, mock_open
 
 sys.path.insert(0, '.')
@@ -16,6 +17,7 @@ class EsthanderTestCases(unittest.TestCase):
         """ setup unittest """
         import logging
         logging.basicConfig(level=logging.CRITICAL)
+        self.logger = logging.getLogger('test_est')
         from est_proxy.est_handler import ESTSrvHandler
         self.esthandler = ESTSrvHandler.__new__(ESTSrvHandler)
         self.esthandler.logger = logging.getLogger('test_est')
@@ -354,6 +356,48 @@ foo
         self.assertIn('Content-Type: text/html', self.input)
         self.assertIn('Content-Transfer-Encoding: encoding', self.input)
         self.assertIn('Connection: close', self.input)
+
+    @patch('est_proxy.est_handler.config_load')
+    def test_37_config_load(self, mock_load_cfg):
+        """ test _config_load empty dictionary """
+        mock_load_cfg.return_value = {}
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.esthandler._config_load()
+        self.assertFalse(self.esthandler.ca_handler)
+        self.assertEqual('openssl', self.esthandler.openssl_bin)
+        self.assertIn('ERROR:test_est:ESTSrvHandler._config_load(): CAhandler configuration missing in config file', lcm.output)
+
+    @patch('est_proxy.est_handler.config_load')
+    def test_38_config_load(self, mock_load_cfg):
+        """ test _config_load customized openssl command """
+        mock_load_cfg.return_value = {'DEFAULT': {'openssl_bin': 'openssl_bin'}}
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.esthandler._config_load()
+        self.assertFalse(self.esthandler.ca_handler)
+        self.assertEqual('openssl_bin', self.esthandler.openssl_bin)
+        self.assertIn('ERROR:test_est:ESTSrvHandler._config_load(): CAhandler configuration missing in config file', lcm.output)
+
+    @patch('est_proxy.est_handler.config_load')
+    def test_39_config_load(self, mock_load_cfg):
+        """ test _config_load ca handler config without handler file """
+        mock_load_cfg.return_value = {'CAhandler': {'foo': 'bar'}}
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.esthandler._config_load()
+        self.assertFalse(self.esthandler.ca_handler)
+        self.assertEqual('openssl', self.esthandler.openssl_bin)
+        self.assertIn("ERROR:test_est:ESTSrvHandler._config_load(): default CAhandler could not get loaded. err: No module named 'est_proxy.ca_handler'", lcm.output)
+
+    @patch('importlib.import_module')
+    @patch('est_proxy.est_handler.config_load')
+    def test_40_config_load(self, mock_load_cfg, mock_import):
+        """ test _config_load ca handler config without handler file """
+        mock_load_cfg.return_value = {'CAhandler': {'foo': 'bar'}}
+        mock_import.return_value = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.esthandler._config_load()
+        self.assertFalse(self.esthandler.ca_handler)
+        self.assertEqual('openssl', self.esthandler.openssl_bin)
+        # self.assertIn("ERROR:test_est:ESTSrvHandler._config_load(): default CAhandler could not get loaded. err: No module named 'est_proxy.ca_handler'", lcm.output)
 
 
 if __name__ == '__main__':

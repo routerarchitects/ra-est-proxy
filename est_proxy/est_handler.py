@@ -87,22 +87,32 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         """ load config from file """
         self.logger.debug('ESTSrvHandler._config_load()')
         config_dic = config_load(self.logger, cfg_file=self.cfg_file)
-        self.openssl_bin = config_dic.get('DEFAULT', 'openssl_bin', fallback='openssl')
+
+        if 'DEFAULT' in config_dic and 'openssl_bin' in config_dic['DEFAULT']:
+            self.openssl_bin = config_dic['DEFAULT']['openssl_bin']
+        else:
+            self.openssl_bin = 'openssl'
 
         if 'CAhandler' in config_dic and 'handler_file' in config_dic['CAhandler']:
             try:
                 ca_handler_module = importlib.import_module(ca_handler_get(self.logger, config_dic['CAhandler']['handler_file']))
             except BaseException:
+                self.logger.error('ESTSrvHandler._config_load(): CAhandler {0} could not get loaded. Loading default hander...'.format(config_dic['CAhandler']['handler_file']))
                 ca_handler_module = importlib.import_module('est_proxy.ca_handler')
         else:
             if 'CAhandler' in config_dic:
-                ca_handler_module = importlib.import_module('est_proxy.ca_handler')
+                try:
+                    ca_handler_module = importlib.import_module('est_proxy.ca_handler')
+                except BaseException as err_:
+                    self.logger.error('ESTSrvHandler._config_load(): default CAhandler could not get loaded. err: {0}'.format(err_))
+                    ca_handler_module = None
             else:
-                self.logger.error('Certificate._config_load(): CAhandler configuration missing in config file')
+                self.logger.error('ESTSrvHandler._config_load(): CAhandler configuration missing in config file')
                 ca_handler_module = None
 
         if ca_handler_module:
             # store handler in variable
+            print('juppjupp')
             self.cahandler = ca_handler_module.CAhandler
 
         self.logger.debug('ca_handler: {0}'.format(ca_handler_module))
