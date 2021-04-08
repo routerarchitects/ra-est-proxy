@@ -387,17 +387,17 @@ foo
         self.assertEqual('openssl', self.esthandler.openssl_bin)
         self.assertIn("ERROR:test_est:ESTSrvHandler._config_load(): default CAhandler could not get loaded. err: No module named 'est_proxy.ca_handler'", lcm.output)
 
-    @patch('importlib.import_module')
-    @patch('est_proxy.est_handler.config_load')
-    def test_40_config_load(self, mock_load_cfg, mock_import):
-        """ test _config_load ca handler config without handler file """
-        mock_load_cfg.return_value = {'CAhandler': {'foo': 'bar'}}
-        mock_import.return_value = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
-        with self.assertLogs('test_est', level='INFO') as lcm:
-            self.esthandler._config_load()
-        self.assertFalse(self.esthandler.ca_handler)
-        self.assertEqual('openssl', self.esthandler.openssl_bin)
-        # self.assertIn("ERROR:test_est:ESTSrvHandler._config_load(): default CAhandler could not get loaded. err: No module named 'est_proxy.ca_handler'", lcm.output)
+    #@patch('importlib.import_module')
+    #@patch('est_proxy.est_handler.config_load')
+    #def test_40_config_load(self, mock_load_cfg, mock_import):
+    #    """ test _config_load ca handler config without handler file """
+    #    mock_load_cfg.return_value = {'CAhandler': {'foo': 'bar'}}
+    #    mock_import.return_value = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
+    #    with self.assertLogs('test_est', level='INFO') as lcm:
+    #        self.esthandler._config_load()
+    #    self.assertFalse(self.esthandler.ca_handler)
+    #    self.assertEqual('openssl', self.esthandler.openssl_bin)
+    #    # self.assertIn("ERROR:test_est:ESTSrvHandler._config_load(): default CAhandler could not get loaded. err: No module named 'est_proxy.ca_handler'", lcm.output)
 
 
 if __name__ == '__main__':
