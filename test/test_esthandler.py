@@ -169,7 +169,7 @@ foo
     @patch('est_proxy.est_handler.ESTSrvHandler._cacerts_split')
     @patch('builtins.open', mock_open(read_data="pkcs7_struc"))
     @patch('subprocess.call')
-    def test_019__pkcs7_convert(self, mock_call, mock_split, mock_dmp, mock_clean):
+    def test_020__pkcs7_convert(self, mock_call, mock_split, mock_dmp, mock_clean):
         """ _pkcs7_convert() all ok """
         self.esthandler.openssl_bin = 'openssl'
         mock_call.return_value = 0
@@ -184,7 +184,7 @@ foo
     @patch('est_proxy.est_handler.ESTSrvHandler._cacerts_dump')
     @patch('est_proxy.est_handler.ESTSrvHandler._cacerts_split')
     @patch('subprocess.call')
-    def test_020__pkcs7_convert(self, mock_call, mock_split, mock_dmp, mock_clean, mock_nf):
+    def test_021__pkcs7_convert(self, mock_call, mock_split, mock_dmp, mock_clean, mock_nf):
         """ _pkcs7_convert() all ok """
         obj1 = Mock()
         obj1.name = 'mock_nf_ret'
@@ -196,14 +196,14 @@ foo
         mock_clean.return_value = 0
         self.assertEqual('pkcs7_struc', self.esthandler._pkcs7_convert('cacertss'))
 
-    def test_021__pkcs7_convert(self):
+    def test_022__pkcs7_convert(self):
         """ _pkcs7_convert() all no cacerts """
         self.esthandler.openssl_bin = 'openssl'
         self.assertFalse(self.esthandler._pkcs7_convert(None))
 
     @patch('est_proxy.est_handler.ESTSrvHandler._cacerts_dump')
     @patch('est_proxy.est_handler.ESTSrvHandler._cacerts_split')
-    def test_022__pkcs7_convert(self, mock_split, mock_dmp):
+    def test_023__pkcs7_convert(self, mock_split, mock_dmp):
         """ _pkcs7_convert() no openssl command defined """
         self.esthandler.openssl_bin = None
         mock_split.return_value = ['foo', 'bar']
@@ -212,7 +212,7 @@ foo
 
     @patch('est_proxy.est_handler.ESTSrvHandler._cacerts_dump')
     @patch('est_proxy.est_handler.ESTSrvHandler._cacerts_split')
-    def test_023__pkcs7_convert(self, mock_split, mock_dmp):
+    def test_024__pkcs7_convert(self, mock_split, mock_dmp):
         """ _pkcs7_convert() cert dump run into an error """
         self.esthandler.openssl_bin = 'openssl'
         mock_split.return_value = ['foo', 'bar']
@@ -225,7 +225,7 @@ foo
     @patch('est_proxy.est_handler.ESTSrvHandler._cacerts_dump')
     @patch('est_proxy.est_handler.ESTSrvHandler._cacerts_split')
     @patch('subprocess.call')
-    def test_024__pkcs7_convert(self, mock_call, mock_split, mock_dmp, mock_clean, mock_nf):
+    def test_025__pkcs7_convert(self, mock_call, mock_split, mock_dmp, mock_clean, mock_nf):
         """ _pkcs7_convert() all ok """
         obj1 = Mock()
         obj1.name = 'mock_nf_ret'
@@ -237,46 +237,46 @@ foo
         mock_clean.return_value = 0
         self.assertFalse(self.esthandler._pkcs7_convert('cacertss'))
 
-    def test_025_get_process(self):
+    def test_026_get_process(self):
         """ _get_process() - root path """
         self.esthandler.path = '/'
         self.assertEqual((400, 'text/html', 29, None, b'An unknown error has occured.'), self.esthandler.get_process())
 
-    def test_026_get_process(self):
+    def test_027_get_process(self):
         """ _get_process() - None as path """
         self.esthandler.path = None
         self.assertEqual((400, 'text/html', 29, None, b'An unknown error has occured.'), self.esthandler.get_process())
 
-    def test_027_get_process(self):
+    def test_028_get_process(self):
         """ _get_process() - int as path """
         self.esthandler.path = 13
         self.assertEqual((400, 'text/html', 29, None, b'An unknown error has occured.'), self.esthandler.get_process())
 
-    def test_028_get_process(self):
+    def test_029_get_process(self):
         """ _get_process() - string as path """
         self.esthandler.path = 13
         self.assertEqual((400, 'text/html', 29, None, b'An unknown error has occured.'), self.esthandler.get_process())
 
-    def test_029_get_process(self):
+    def test_030_get_process(self):
         """ _get_process() - unknown path """
         self.esthandler.path = '/notallowedpath'
         self.assertEqual((400, 'text/html', 29, None, b'An unknown error has occured.'), self.esthandler.get_process())
 
     @patch('est_proxy.est_handler.ESTSrvHandler._cacerts_get')
-    def test_030_get_process(self, mock_caget):
+    def test_031_get_process(self, mock_caget):
         """ _get_process() - ca certs """
         self.esthandler.path = '/.well-known/est/cacerts'
         mock_caget.return_value = 'foobar'
         self.assertEqual((200, 'application/pkcs7-mime', 6, 'base64', b'foobar'), self.esthandler.get_process())
 
     @patch('est_proxy.est_handler.ESTSrvHandler._cacerts_get')
-    def test_031_get_process(self, mock_caget):
+    def test_032_get_process(self, mock_caget):
         """ _get_process() - ca certs """
         self.esthandler.path = '/.well-known/est/cacerts'
         mock_caget.return_value = None
         self.assertEqual((500, 'text/html', 0, None, None), self.esthandler.get_process())
 
-    def test_032_set_response(self):
+    def test_033_set_response(self):
         """ _set_response() - all ok """
         def dummy_func(*args):
             self.input = args[0].decode('utf-8')
@@ -293,7 +293,7 @@ foo
         self.assertIn('Content-Length: 100', self.input)
         self.assertIn('Connection: close', self.input)
 
-    def test_033_set_response(self):
+    def test_034_set_response(self):
         """ _set_response() - no content length code 500 """
         def dummy_func(*args):
             self.input = args[0].decode('utf-8')
@@ -309,7 +309,7 @@ foo
         self.assertIn('Content-Transfer-Encoding: utf-8', self.input)
         self.assertIn('Connection: close', self.input)
 
-    def test_034_set_response(self):
+    def test_035_set_response(self):
         """ _set_response() - code 404 """
         def dummy_func(*args):
             self.input = args[0].decode('utf-8')
@@ -325,7 +325,7 @@ foo
         self.assertIn('Content-Transfer-Encoding: utf-8', self.input)
         self.assertIn('Connection: close', self.input)
 
-    def test_035_set_response(self):
+    def test_036_set_response(self):
         """ _set_response() -  different content length """
         def dummy_func(*args):
             self.input = args[0].decode('utf-8')
@@ -341,7 +341,7 @@ foo
         self.assertIn('Content-Transfer-Encoding: utf-8', self.input)
         self.assertIn('Connection: close', self.input)
 
-    def test_036_set_response(self):
+    def test_037_set_response(self):
         """ _set_response() -  different encoding, no content-type """
         def dummy_func(*args):
             self.input = args[0].decode('utf-8')
@@ -358,46 +358,79 @@ foo
         self.assertIn('Connection: close', self.input)
 
     @patch('est_proxy.est_handler.config_load')
-    def test_37_config_load(self, mock_load_cfg):
+    def test_038_config_load(self, mock_load_cfg):
         """ test _config_load empty dictionary """
         mock_load_cfg.return_value = {}
         with self.assertLogs('test_est', level='INFO') as lcm:
             self.esthandler._config_load()
-        self.assertFalse(self.esthandler.ca_handler)
+        self.assertFalse(self.esthandler.cahandler)
         self.assertEqual('openssl', self.esthandler.openssl_bin)
         self.assertIn('ERROR:test_est:ESTSrvHandler._config_load(): CAhandler configuration missing in config file', lcm.output)
 
     @patch('est_proxy.est_handler.config_load')
-    def test_38_config_load(self, mock_load_cfg):
+    def test_039_config_load(self, mock_load_cfg):
         """ test _config_load customized openssl command """
         mock_load_cfg.return_value = {'DEFAULT': {'openssl_bin': 'openssl_bin'}}
         with self.assertLogs('test_est', level='INFO') as lcm:
             self.esthandler._config_load()
-        self.assertFalse(self.esthandler.ca_handler)
+        self.assertFalse(self.esthandler.cahandler)
         self.assertEqual('openssl_bin', self.esthandler.openssl_bin)
         self.assertIn('ERROR:test_est:ESTSrvHandler._config_load(): CAhandler configuration missing in config file', lcm.output)
 
     @patch('est_proxy.est_handler.config_load')
-    def test_39_config_load(self, mock_load_cfg):
+    def test_040_config_load(self, mock_load_cfg):
         """ test _config_load ca handler config without handler file """
         mock_load_cfg.return_value = {'CAhandler': {'foo': 'bar'}}
         with self.assertLogs('test_est', level='INFO') as lcm:
             self.esthandler._config_load()
-        self.assertFalse(self.esthandler.ca_handler)
+        self.assertFalse(self.esthandler.cahandler)
         self.assertEqual('openssl', self.esthandler.openssl_bin)
         self.assertIn("ERROR:test_est:ESTSrvHandler._config_load(): default CAhandler could not get loaded. err: No module named 'est_proxy.ca_handler'", lcm.output)
 
-    #@patch('importlib.import_module')
-    #@patch('est_proxy.est_handler.config_load')
-    #def test_40_config_load(self, mock_load_cfg, mock_import):
-    #    """ test _config_load ca handler config without handler file """
-    #    mock_load_cfg.return_value = {'CAhandler': {'foo': 'bar'}}
-    #    mock_import.return_value = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
-    #    with self.assertLogs('test_est', level='INFO') as lcm:
-    #        self.esthandler._config_load()
-    #    self.assertFalse(self.esthandler.ca_handler)
-    #    self.assertEqual('openssl', self.esthandler.openssl_bin)
-    #    # self.assertIn("ERROR:test_est:ESTSrvHandler._config_load(): default CAhandler could not get loaded. err: No module named 'est_proxy.ca_handler'", lcm.output)
+    @patch('importlib.import_module')
+    @patch('est_proxy.est_handler.config_load')
+    def test_041_config_load(self, mock_load_cfg, mock_import):
+        """ test _config_load ca handler config without handler file """
+        mock_load_cfg.return_value = {'CAhandler': {'foo': 'bar'}}
+        mock_import.return_value = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
+        self.esthandler._config_load()
+        self.assertTrue(self.esthandler.cahandler)
+        self.assertEqual('openssl', self.esthandler.openssl_bin)
+
+    @patch('est_proxy.est_handler.config_load')
+    def test_042_config_load(self, mock_load_cfg):
+        """ test _config_load ca handler handler file configured but both handle_file and default handler failed """
+        mock_load_cfg.return_value = {'CAhandler': {'handler_file': 'handler_file', 'foo': 'bar'}}
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.esthandler._config_load()
+        self.assertFalse(self.esthandler.cahandler)
+        self.assertEqual('openssl', self.esthandler.openssl_bin)
+        self.assertIn("ERROR:test_est:ESTSrvHandler._config_load(): CAhandler handler_file could not get loaded. Loading default hander...", lcm.output)
+        self.assertIn("ERROR:test_est:ESTSrvHandler._config_load():  Loading default hander failed.", lcm.output)
+
+    @patch('importlib.import_module')
+    @patch('est_proxy.est_handler.config_load')
+    def test_043_config_load(self, mock_load_cfg, mock_import):
+        """ test _config_load ca handler config without handler file """
+        mock_load_cfg.return_value = {'CAhandler': {'handler_file': 'handler_file', 'foo': 'bar'}}
+        mockresponse1 = Exception('exc_cahandlerconfigload')
+        mockresponse2 = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
+        mock_import.side_effect = [mockresponse1, mockresponse2]
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.esthandler._config_load()
+        self.assertTrue(self.esthandler.cahandler)
+        self.assertEqual('openssl', self.esthandler.openssl_bin)
+        self.assertIn("ERROR:test_est:ESTSrvHandler._config_load(): CAhandler handler_file could not get loaded. Loading default hander...", lcm.output)
+
+    @patch('importlib.import_module')
+    @patch('est_proxy.est_handler.config_load')
+    def test_044_config_load(self, mock_load_cfg, mock_import):
+        """ test _config_load ca handler confighandler file could get successfully loaded """
+        mock_load_cfg.return_value = {'CAhandler': {'handler_file': 'handler_file', 'foo': 'bar'}}
+        mock_import.return_value = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
+        self.esthandler._config_load()
+        self.assertTrue(self.esthandler.cahandler)
+        self.assertEqual('openssl', self.esthandler.openssl_bin)
 
 
 if __name__ == '__main__':

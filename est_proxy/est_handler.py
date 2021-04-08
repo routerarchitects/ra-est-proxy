@@ -11,7 +11,7 @@ from est_proxy.version import __version__
 
 class ESTSrvHandler(BaseHTTPRequestHandler):
     """ serverside of est protocol handler """
-    ca_handler = None
+    cahandler = None
     debug = False
     cfg_file = None
     logger = None
@@ -98,7 +98,11 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
                 ca_handler_module = importlib.import_module(ca_handler_get(self.logger, config_dic['CAhandler']['handler_file']))
             except BaseException:
                 self.logger.error('ESTSrvHandler._config_load(): CAhandler {0} could not get loaded. Loading default hander...'.format(config_dic['CAhandler']['handler_file']))
-                ca_handler_module = importlib.import_module('est_proxy.ca_handler')
+                try:
+                    ca_handler_module = importlib.import_module('est_proxy.ca_handler')
+                except BaseException:
+                    self.logger.error('ESTSrvHandler._config_load():  Loading default hander failed.')
+                    ca_handler_module = None
         else:
             if 'CAhandler' in config_dic:
                 try:
@@ -112,7 +116,6 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
 
         if ca_handler_module:
             # store handler in variable
-            print('juppjupp')
             self.cahandler = ca_handler_module.CAhandler
 
         self.logger.debug('ca_handler: {0}'.format(ca_handler_module))
