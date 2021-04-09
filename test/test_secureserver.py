@@ -92,18 +92,18 @@ class SecureserverTestCases(unittest.TestCase):
         self.assertTrue(self.secureserver.config_dic['connection_log'])
         self.assertFalse(self.secureserver.debug)
 
-    @patch('est_proxy.secureserver.config_load')
-    def test_007_config_load(self, mock_load_cfg):
-        """ test _config_load debug False """
-        # mock_logger.return_value = None
-        parser = configparser.ConfigParser()
-        parser['ClientAuth'] = {'key_file': 'bar'}
-        mock_load_cfg.return_value = parser
-        with self.assertLogs('test_est', level='INFO') as lcm:
-            self.secureserver._config_load()
-        self.assertFalse(self.secureserver.config_dic['connection_log'])
-        self.assertFalse(self.secureserver.debug)
-        self.assertIn('foo', lcm.output)
+    #@patch('est_proxy.secureserver.config_load')
+    #def test_007_config_load(self, mock_load_cfg):
+    #    """ test _config_load debug False """
+    #    # mock_logger.return_value = None
+    #    parser = configparser.ConfigParser()
+    #    parser['ClientAuth'] = {'key_file': 'bar'}
+    #    mock_load_cfg.return_value = parser
+    #    with self.assertLogs('test_est', level='INFO') as lcm:
+    #        self.secureserver._config_load()
+    #    self.assertFalse(self.secureserver.config_dic['connection_log'])
+    #    self.assertFalse(self.secureserver.debug)
+    #    self.assertIn('foo', lcm.output)
 
 
 if __name__ == '__main__':
