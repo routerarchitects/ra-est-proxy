@@ -35,11 +35,19 @@ jobs:
         docker-compose restart
         docker-compose logs
 
-    - name: " [ Test ] fetch Ca certificates using estclient"
+    - name: "[ PREPARE ] estclient config"
       run: |
         sudo cp .github/wf_data/certs/cacerts.pem /tmp
-        sudo chmod 755 /tmp/cacerts.pem
+        sudo cp .github/wf_data/certs/est*.pem /tmp
+        sudo chmod 755 /tmp/*.pem
+
+    - name: "[ Test ] fetch Ca certificates using estclient"
+      run: |
         docker run -v /tmp/cacerts.pem:/tmp/cacerts.pem --env EST_OPENSSL_CACERT=/tmp/cacerts.pem --network est grindsa/estclient estclient -g -s est-proxy.est -p 17443 -v -o /tmp
+
+    - name: "[ Test ] fetch enroll certificate using estclient"
+      run: |
+        docker run -v /tmp/cacerts.pem:/tmp/cacerts.pem -v /tmp/estclient.crt.pem:/tmp/estclient.crt.pem -v /tmp/estclient.key.pem:/tmp/estclient.key.pem --env EST_OPENSSL_CACERT=/tmp/cacerts.pem --network est grindsa/estclient estclient -e -s est-proxy.est -p 17443 -v -o /tmp
 
     - name: "[ * ] collecting test logs"
       if: ${{ failure() }}

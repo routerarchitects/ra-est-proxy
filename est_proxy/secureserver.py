@@ -59,7 +59,6 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
             else:
                 self.logger.error('Secureserver._load_config() ClientAuth configured but no cert_file specified.')
 
-
     def handshake(self, connection):
         # pylint: disable=W0221
         self.logger.debug('SecureServer.handshake()')
