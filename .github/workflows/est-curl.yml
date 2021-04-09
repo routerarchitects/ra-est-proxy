@@ -32,12 +32,18 @@ jobs:
         sudo chmod 777 examples/Docker/data/est_proxy.cfg
         sudo cat .github/wf_data/est_proxy_clientauth.cfg >> examples/Docker/data/est_proxy.cfg
         sudo cat .github/wf_data/est_proxy_xca.cfg >> examples/Docker/data/est_proxy.cfg
+        sudo cp .github/wf_data/certs/cacerts.pem /tmp
+        sudo cp .github/wf_data/certs/estcl*.pem /tmp
+        sudo chmod 755 /tmp/*.pem
         cd examples/Docker/
         docker-compose restart
         docker-compose logs
 
     - name: "[ Test ] fetch CA-certificates"
       run: docker run -i --rm --network est curlimages/curl -X GET https://est-proxy:17443/.well-known/est/cacerts -k
+
+    - name: "[ Test ] enroll certificate"
+      run: docker run -i --rm --network est -v /tmp/cacerts.pem:/tmp/cacerts.pem -v /tmp/estclient.crt.pem:/tmp/estclient.crt.pem -v /tmp/estclient.key.pem:/tmp/estclient.key.pem -v /tmp/estclient.csr.pem:/tmp/estclient.csr.pem curlimages/curl https://est-proxy:17443/.well-known/est/simpleenroll --key /tmp/estclient.key.pem --cert /tmp/estclient.key.pem --verbose --cacert /tmp/cacerts.pem --data-binary @/tmp/estclient.csr.pem -H "Content-Type: application/pkcs10"
 
     - name: "[ * ] collecting test logs"
       if: ${{ failure() }}
