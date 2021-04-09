@@ -12,8 +12,9 @@ from est_proxy.helper import config_load, logger_setup, hssrv_options_get, conne
 class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
     """ Secure server """
     logger = None
-    config_dic = {}
+    debug = False
     cfg_file = None
+    config_dic = {}
 
     def __init__(self, *args, **kwargs):
         # get cfg_file name and load config
@@ -26,27 +27,38 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
         """ load config from file """
 
         config_dic = config_load(cfg_file=self.cfg_file)
-        debug = config_dic.getboolean('DEFAULT', 'debug', fallback=False)
-        self.logger = logger_setup(debug, cfg_file=self.cfg_file)
+        if 'DEFAULT' in config_dic:
+            self.debug = config_dic.getboolean('DEFAULT', 'debug', fallback=False)
+            self.config_dic['connection_log'] = config_dic.getboolean('DEFAULT', 'connection_log', fallback=False)
+        else:
+            self.default = False
+            self.config_dic['connection_log'] = False
 
-        self.config_dic['connection_log'] = config_dic.getboolean('DEFAULT', 'connection_log', fallback=False)
+        self.logger = logger_setup(self.debug, cfg_file=self.cfg_file)
 
         if 'ClientAuth' in config_dic:
             self.config_dic['ClientAuth'] = {}
-            self.config_dic['ClientAuth']['address'] = config_dic.get('ClientAuth', 'address', fallback=None)
-            self.config_dic['ClientAuth']['port'] = int(config_dic.get('ClientAuth', 'port', fallback='1443'))
+            if 'key_file' in config_dic['ClientAuth']:
+                try:
+                    # load key
+                    key_file = open(config_dic.get('ClientAuth', 'key_file', fallback=None), 'rb').read()
+                    key_file = str(key_file, 'utf-8')
+                    self.config_dic['ClientAuth']['key_file'] = parsePEMKey(key_file, private=True, implementations=["python"])
+                except BaseException as err_:
+                    self.logger.error('Secureserver._load_config() key_file {0} could not be loaded.'.format(config_dic['ClientAuth']['key_file']))
+            else:
+                self.logger.error('Secureserver._load_config() ClientAuth configured but no key_file specified.')
 
-            # load key
-            key_file = open(config_dic.get('ClientAuth', 'key_file', fallback=None), 'rb').read()
-            key_file = str(key_file, 'utf-8')
-            self.config_dic['ClientAuth']['key_file'] = parsePEMKey(key_file, private=True, implementations=["python"])
+            if 'cert_file' in config_dic['ClientAuth']:
+                # load cert
+                cert_file = open(config_dic.get('ClientAuth', 'cert_file', fallback=None), 'rb').read()
+                cert_file = str(cert_file, 'utf-8')
+                cert_chain = X509CertChain()
+                cert_chain.parsePemList(cert_file)
+                self.config_dic['ClientAuth']['cert_file'] = cert_chain
+            else:
+                self.logger.error('Secureserver._load_config() ClientAuth configured but no cert_file specified.')
 
-            # load cert
-            cert_file = open(config_dic.get('ClientAuth', 'cert_file', fallback=None), 'rb').read()
-            cert_file = str(cert_file, 'utf-8')
-            cert_chain = X509CertChain()
-            cert_chain.parsePemList(cert_file)
-            self.config_dic['ClientAuth']['cert_file'] = cert_chain
 
     def handshake(self, connection):
         # pylint: disable=W0221
