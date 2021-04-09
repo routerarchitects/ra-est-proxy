@@ -85,7 +85,10 @@ def config_load(logger=None, mfilter=None, cfg_file=os.path.dirname(__file__)+'/
         logger.debug('load_config({1}:{0})'.format(mfilter, cfg_file))
     config = configparser.RawConfigParser()
     config.optionxform = str
-    config.read(cfg_file)
+    try:
+        config.read(cfg_file)
+    except BaseException:
+        config = {}
 
     return config
 
@@ -143,7 +146,7 @@ def convert_string_to_byte(value):
 def csr_cn_get(logger, csr):
     """ get cn from certificate request """
     logger.debug('CAhandler.csr_cn_get()')
-    pem_file = build_pem_file(logger, None, b64_url_recode(logger, csr), True, True)
+    pem_file = build_pem_file(logger, None, csr, True, True)
     req = OpenSSL.crypto.load_certificate_request(OpenSSL.crypto.FILETYPE_PEM, pem_file)
     subject = req.get_subject()
     components = dict(subject.get_components())
@@ -181,8 +184,11 @@ def logger_setup(debug, cfg_file=None):
         log_mode = logging.INFO
 
     # define log format
-    config_dic = config_load(cfg_file=cfg_file)
-    log_format = config_dic.get('LOGGING', 'log_format', fallback='%(message)s')
+    try:
+        config_dic = config_load(cfg_file=cfg_file)
+        log_format = config_dic.get('LOGGING', 'log_format', fallback='%(message)s')
+    except:
+        log_format = '%(message)s'
 
     logging.basicConfig(format=log_format, datefmt="%Y-%m-%d %H:%M:%S", level=log_mode)
     logger = logging.getLogger('est_proxy')
