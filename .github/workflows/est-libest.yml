@@ -8,7 +8,7 @@ on:
     - cron:  '0 2 * * 6'
 
 jobs:
-  est_proto_curl:
+  est_proto_libest:
     name: "est_proto_libest"
     runs-on: ubuntu-latest
     steps:
