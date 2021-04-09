@@ -46,13 +46,11 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         with self.cahandler(self.cfg_file, self.logger) as ca_handler:
             # get ca_certs
             ca_certs = ca_handler.ca_certs_get()
-            # ca_certs = open('ca_bundle.pem').read()
             # convert pem to pkcs#7
             if ca_certs:
                 ca_pkcs7 = self._pkcs7_convert(ca_certs)
             else:
                 ca_pkcs7 = None
-
         self.logger.debug('ESTSrvHandler._cacerts_get() ended with: {0}'.format(bool(ca_pkcs7)))
         return ca_pkcs7
 
@@ -82,6 +80,18 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
                 ca_file_names.append(fso.name)
         self.logger.debug('ESTSrvHandler._cacerts_dump() ended with: {0} certs'.format(len(ca_file_names)))
         return ca_file_names
+
+    def _cert_enroll(self, csr):
+        """ enroll cert """
+        self.logger.debug('ESTSrvHandler._cert_enroll()')
+        with self.cahandler(self.cfg_file, self.logger) as ca_handler:
+            # get ca_certs
+            (error, cert) = ca_handler.enroll(csr)
+            if not error and cert:
+                cert_pkcs7 = self._pkcs7_convert(cert, pkcs7_clean=True)
+
+        self.logger.debug('ESTSrvHandler._cacerts_get() ended with: {0}'.format(bool(cert_pkcs7)))
+        return (error, cert_pkcs7)
 
     def _config_load(self):
         """ load config from file """
@@ -133,7 +143,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
             pkcs7_struc = "\n".join([s for s in pkcs7_struc.split("\n") if s])
         return pkcs7_struc
 
-    def _pkcs7_convert(self, ca_certs):
+    def _pkcs7_convert(self, ca_certs, pkcs7_clean=False):
         """ convert to pkcs#7 """
         self.logger.debug('ESTSrvHandler._pkcs7_convert()')
 
@@ -156,6 +166,9 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
                 if rcode == 0:
                     with open(pkcs7_file, 'r', encoding='utf-8') as fso:
                         pkcs7_struc = fso.read()
+
+                if pkcs7_struc and pkcs7_clean:
+                    pkcs7_struc = self._pkcs7_clean(pkcs7_struc)
 
                 # add outfile to list and delete all files
                 file_names.append(pkcs7_file)
@@ -225,6 +238,35 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
 
         return(code, content_type, content_length, encoding, content)
 
+    def post_process(self, data):
+        """ main method to process post requests """
+        self.logger.debug('ESTSrvHandler.get_process %s', self.path)
+        content = None
+        content_length = 0
+        encoding = None
+        code = 400
+
+        if self.path == '/.well-known/est/simpleenroll':
+            # enroll certificate
+            (error, cert) = self._cert_enroll(data)
+            if not error:
+                code = 200
+                content_type = 'application/pkcs7-mime; smime-type=certs-only'
+                content = cert
+                encoding = 'base64'
+            else:
+                code = 500
+        else:
+            code = 400
+            content_type = 'text/html'
+            content = 'An unknown error has occured.'
+
+        if content:
+            content_length = len(str(content))
+            content = content.encode('utf8')
+
+        return(code, content_type, content_length, encoding, content)
+
     # pylint: disable=C0103
     def do_GET(self):
         """ this is a http get """
@@ -241,7 +283,15 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         self.logger.debug('ESTSrvHandler.do_POST %s path: %s', self.client_address, self.path)
         content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
         post_data = self.rfile.read(content_length) # <--- Gets the data itself
-        self.logger.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n", str(self.path), str(self.headers), post_data.decode('utf-8'))
 
-        self._set_response()
-        self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
+        # self.logger.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n", str(self.path), str(self.headers), post_data.decode('utf-8'))
+        # process requests
+        (code, content_type, content_length, encoding, content) = self.post_process(post_data)
+
+        # write response
+        self._set_response(code, content_type, content_length, encoding)
+        if content:
+            self.wfile.write(content)
+
+        #self._set_response()
+        #self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))

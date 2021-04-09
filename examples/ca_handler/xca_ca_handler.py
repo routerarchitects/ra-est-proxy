@@ -608,12 +608,12 @@ class CAhandler(object):
         if not error:
 
             request_name = self._requestname_get(csr)
-
             # import CSR to database
             _csr_info = self._csr_import(csr, request_name)
 
             # prepare the CSR to be signed
-            csr = build_pem_file(self.logger, None, b64_url_recode(self.logger, csr), None, True)
+            # csr = build_pem_file(self.logger, None, b64_url_recode(self.logger, csr), None, True)
+            csr = build_pem_file(self.logger, None, csr, None, True)
 
             # load ca cert and key
             (ca_key, ca_cert, ca_id) = self._ca_load()
@@ -672,12 +672,10 @@ class CAhandler(object):
 
                 # store certificate
                 self._store_cert(ca_id, request_name, '{:X}'.format(serial), convert_byte_to_string(b64_encode(self.logger, crypto.dump_certificate(crypto.FILETYPE_ASN1, cert))), name_hash, issuer_hash)
-
-                cert_bundle = self._pemcertchain_generate(convert_byte_to_string(crypto.dump_certificate(crypto.FILETYPE_PEM, cert)), convert_byte_to_string(crypto.dump_certificate(crypto.FILETYPE_PEM, ca_cert)))
-                cert_raw = convert_byte_to_string(b64_encode(self.logger, crypto.dump_certificate(crypto.FILETYPE_ASN1, cert)))
+                cert = convert_byte_to_string(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
 
         self.logger.debug('Certificate.enroll() ended')
-        return(error, cert_bundle, cert_raw, None)
+        return(error, cert)
 
     def _extension_list_generate(self, template_dic, cert, ca_cert):
         """ set extension list """
