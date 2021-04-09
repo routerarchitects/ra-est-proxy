@@ -40,10 +40,10 @@ jobs:
         docker-compose logs
 
     - name: "[ Test ] fetch CA-certificates"
-      run: docker run -i --rm --network est curlimages/curl -X GET https://est-proxy:17443/.well-known/est/cacerts -k
+      run: docker run -v /tmp/cacerts.pem:/tmp/cacerts.pem -i --rm --network est curlimages/curl -X GET https://est-proxy.est:17443/.well-known/est/cacerts --cacert /tmp/cacerts.pem 
 
     - name: "[ Test ] enroll certificate"
-      run: docker run -v /tmp/cacerts.pem:/tmp/cacerts.pem -v /tmp/estclient.crt.pem:/tmp/estclient.crt.pem -v /tmp/estclient.key.pem:/tmp/estclient.key.pem -v /tmp/estclient.csr.pem:/tmp/estclient.csr.pem -i --rm --network est curlimages/curl https://est-proxy:17443/.well-known/est/simpleenroll --key /tmp/estclient.key.pem --cert /tmp/estclient.key.pem --cacert /tmp/cacerts.pem --data-binary "@/tmp/estclient.csr.pem" -H "Content-Type:application/pkcs10" --verbose
+      run: docker run -v /tmp/cacerts.pem:/tmp/cacerts.pem -v /tmp/estclient.crt.pem:/tmp/estclient.crt.pem -v /tmp/estclient.key.pem:/tmp/estclient.key.pem -v /tmp/estclient.csr.pem:/tmp/estclient.csr.pem -i --rm --network est curlimages/curl https://est-proxy.est:17443/.well-known/est/simpleenroll --key /tmp/estclient.key.pem --cert /tmp/estclient.crt.pem --cacert /tmp/cacerts.pem --data-binary "@/tmp/estclient.csr.pem" -H "Content-Type:application/pkcs10" --verbose
 
     - name: "[ * ] collecting test logs"
       if: ${{ failure() }}
