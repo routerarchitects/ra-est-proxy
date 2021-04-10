@@ -246,7 +246,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         encoding = None
         code = 400
 
-        if self.path == '/.well-known/est/simpleenroll':
+        if self.path == '/.well-known/est/simpleenroll' or self.path == '/.well-known/est/simplereenroll':
             # enroll certificate
             (error, cert) = self._cert_enroll(data)
             if not error:
