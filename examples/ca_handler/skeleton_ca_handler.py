@@ -3,7 +3,7 @@
 """ skeleton for customized CA handler """
 from __future__ import print_function
 # pylint: disable=E0401
-from acme.helper import load_config
+from est_proxy.helper import config_load
 
 class CAhandler(object):
     """ EST CA  handler """
@@ -25,7 +25,7 @@ class CAhandler(object):
         """" load config from file """
         self.logger.debug('CAhandler._config_load()')
 
-        config_dic = load_config(self.logger, 'CAhandler')
+        config_dic = config_load(self.logger, 'CAhandler')
         if 'parameter' in config_dic['CAhandler']:
             self.parameter = config_dic['CAhandler']['parameter']
 

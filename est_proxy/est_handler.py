@@ -50,6 +50,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
             if ca_certs:
                 ca_pkcs7 = self._pkcs7_convert(ca_certs)
             else:
+                self.logger.error('ESTSrvHandler._cacerts_get(): no cacerts returned from handler')                
                 ca_pkcs7 = None
         self.logger.debug('ESTSrvHandler._cacerts_get() ended with: {0}'.format(bool(ca_pkcs7)))
         return ca_pkcs7
@@ -84,11 +85,21 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
     def _cert_enroll(self, csr):
         """ enroll cert """
         self.logger.debug('ESTSrvHandler._cert_enroll()')
-        with self.cahandler(self.cfg_file, self.logger) as ca_handler:
-            # get ca_certs
-            (error, cert) = ca_handler.enroll(csr)
-            if not error and cert:
-                cert_pkcs7 = self._pkcs7_convert(cert, pkcs7_clean=True)
+        cert_pkcs7 = None
+        if csr:
+            with self.cahandler(self.cfg_file, self.logger) as ca_handler:
+                # get certs
+                (error, cert) = ca_handler.enroll(csr)
+                if not error and cert:
+                    cert_pkcs7 = self._pkcs7_convert(cert, pkcs7_clean=True)
+                else:
+                    if not cert:
+                        error = 'No error but no cert returned'
+                    self.logger.error('ESTSrvHandler._cert_enroll(): {0}'.format(error))
+
+        else:
+            error = 'no CSR submittted'
+            self.logger.error('ESTSrvHandler._cert_enroll(): no csr submitted')
 
         self.logger.debug('ESTSrvHandler._cacerts_get() ended with: {0}'.format(bool(cert_pkcs7)))
         return (error, cert_pkcs7)
@@ -209,7 +220,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         self.send_header('Connection', 'close')
         self.end_headers()
 
-    def get_process(self):
+    def _get_process(self):
         """ main method to process get requests """
         self.logger.debug('ESTSrvHandler.get_process %s', self.path)
         content = None
@@ -238,7 +249,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
 
         return(code, content_type, content_length, encoding, content)
 
-    def post_process(self, data):
+    def _post_process(self, data):
         """ main method to process post requests """
         self.logger.debug('ESTSrvHandler.get_process %s', self.path)
         content = None
@@ -246,7 +257,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         encoding = None
         code = 400
 
-        if self.path == '/.well-known/est/simpleenroll' or self.path == '/.well-known/est/simplereenroll':
+        if data and (self.path == '/.well-known/est/simpleenroll' or self.path == '/.well-known/est/simplereenroll'):
             # enroll certificate
             (error, cert) = self._cert_enroll(data)
             if not error:
@@ -256,6 +267,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
                 encoding = 'base64'
             else:
                 code = 500
+                content_type = 'text/html'
         else:
             code = 400
             content_type = 'text/html'
@@ -272,7 +284,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         """ this is a http get """
         self.logger.debug('ESTSrvHandler.do_GET %s path: %s', self.client_address, self.path)
         # process request
-        (code, content_type, content_length, encoding, content) = self.get_process()
+        (code, content_type, content_length, encoding, content) = self._get_process()
         # write response
         self._set_response(code, content_type, content_length, encoding)
         if content:
@@ -286,7 +298,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
 
         # self.logger.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n", str(self.path), str(self.headers), post_data.decode('utf-8'))
         # process requests
-        (code, content_type, content_length, encoding, content) = self.post_process(post_data)
+        (code, content_type, content_length, encoding, content) = self._post_process(post_data)
 
         # write response
         self._set_response(code, content_type, content_length, encoding)
