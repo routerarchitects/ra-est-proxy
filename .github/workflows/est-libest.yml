@@ -40,7 +40,6 @@ jobs:
         sudo mkdir /tmp/certs
         sudo cp .github/wf_data/certs/cacerts.pem /tmp/certs
         sudo cp .github/wf_data/certs/est*.pem /tmp/certs
-        # sudo chmod 755 /tmp/certs/*.pem
 
     - name: "[ Test ] fetch Ca certificates using estclient"
       run: |
