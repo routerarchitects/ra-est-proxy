@@ -37,23 +37,30 @@ jobs:
 
     - name: "[ PREPARE ] estclient config"
       run: |
-        sudo cp .github/wf_data/certs/cacerts.pem /tmp
-        sudo cp .github/wf_data/certs/est*.pem /tmp
-        sudo chmod 755 /tmp/*.pem
+        sudo mkdir /tmp/certs
+        sudo cp .github/wf_data/certs/cacerts.pem /tmp/certs
+        sudo cp .github/wf_data/certs/est*.pem /tmp/certs
+        # sudo chmod 755 /tmp/certs/*.pem
 
     - name: "[ Test ] fetch Ca certificates using estclient"
       run: |
-        docker run -v /tmp/cacerts.pem:/tmp/cacerts.pem --env EST_OPENSSL_CACERT=/tmp/cacerts.pem --network est grindsa/estclient estclient -g -s est-proxy.est -p 17443 -v -o /tmp
+        docker run -v /tmp/certs:/tmp/certs --env EST_OPENSSL_CACERT=/tmp/certs/cacerts.pem --network est grindsa/estclient estclient -g -s est-proxy.est -p 17443 -v -o /tmp
 
-    - name: "[ Test ] fetch enroll certificate using estclient"
+    - name: "[ Test ] enroll certificate using estclient"
       run: |
-        docker run -v /tmp/cacerts.pem:/tmp/cacerts.pem -v /tmp/estclient.crt.pem:/tmp/estclient.crt.pem -v /tmp/estclient.key.pem:/tmp/estclient.key.pem --env EST_OPENSSL_CACERT=/tmp/cacerts.pem --network est grindsa/estclient estclient -e -s est-proxy.est -p 17443 -v -o /tmp
+        docker run -v /tmp/certs:/tmp/certs --env EST_OPENSSL_CACERT=/tmp/certs/cacerts.pem --network est grindsa/estclient estclient -e -s est-proxy.est -p 17443 -k /tmp/certs/estclient.key.pem -c /tmp/certs/estclient.crt.pem --pem-out -o /tmp/certs -v
+        sudo ls -la /tmp/certs
+
+    - name: "[ Test ] reenroll certificate using estclient"
+      run: |
+        docker run -v /tmp/certs:/tmp/certs --env EST_OPENSSL_CACERT=/tmp/certs/cacerts.pem --network est grindsa/estclient estclient -g -s est-proxy.est -p 17443 -k /tmp/certs/key-x-x.pem -c /tmp/certs/cert-0-0.pem -o /tmp/certs --pem-out -v
 
     - name: "[ * ] collecting test logs"
       if: ${{ failure() }}
       run: |
         mkdir -p ${{ github.workspace }}/artifact/upload
         sudo cp -rp examples/Docker/data/ ${{ github.workspace }}/artifact/data/
+        sudo cp -rp /tmp/certs ${{ github.workspace }}/artifact/data/tmp_certs
         cd examples/Docker
         docker-compose logs > ${{ github.workspace }}/artifact/docker-compose.log
         sudo tar -C ${{ github.workspace }}/artifact/ -cvzf ${{ github.workspace }}/artifact/upload/artifact.tar.gz docker-compose.log data
