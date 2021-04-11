@@ -185,7 +185,6 @@ class CAhandler(object):
             self.issuing_ca_key = config_dic['CAhandler']['issuing_ca_key']
 
         if 'ca_cert_chain_list' in config_dic['CAhandler']:
-            print(config_dic['CAhandler']['ca_cert_chain_list'])
             try:
                 self.ca_cert_chain_list = json.loads(config_dic['CAhandler']['ca_cert_chain_list'])
             except BaseException as err:
