@@ -432,43 +432,60 @@ foo
         self.assertTrue(self.esthandler.cahandler)
         self.assertEqual('openssl', self.esthandler.openssl_bin)
 
-    def test_045__post_process(self):
+    @patch('est_proxy.est_handler.ESTSrvHandler._auth_check')
+    def test_045__post_process(self, mock_auth):
         """ _post_process() - root path """
         self.esthandler.path = '/'
-        self.assertEqual((400, 'text/html', 29, None, b'An unknown error has occured.'), self.esthandler._post_process('data'))
+        mock_auth.return_value = False
+        self.assertEqual((401, None, 48, None, b'The server was unable to authorize the request.\n'), self.esthandler._post_process('data'))
 
-    def test_046__post_process(self):
+    @patch('est_proxy.est_handler.ESTSrvHandler._auth_check')
+    def test_046__post_process(self, mock_auth):
+        """ _post_process() - root path """
+        self.esthandler.path = '/'
+        mock_auth.return_value = True
+        self.assertEqual((400, None, 30, None, b'An unknown error has occured.\n'), self.esthandler._post_process('data'))
+
+    @patch('est_proxy.est_handler.ESTSrvHandler._auth_check')
+    def test_047__post_process(self, mock_auth):
         """ _post_process() - enroll but no data """
         self.esthandler.path = '/.well-known/est/simpleenroll'
-        self.assertEqual((400, 'text/html', 29, None, b'An unknown error has occured.'), self.esthandler._post_process(None))
+        mock_auth.return_value = True
+        self.assertEqual((400, None, 30, None, b'An unknown error has occured.\n'), self.esthandler._post_process(None))
 
-    def test_047__post_process(self):
+    @patch('est_proxy.est_handler.ESTSrvHandler._auth_check')
+    def test_048__post_process(self, mock_auth):
         """ _post_process() - enroll but no data """
         self.esthandler.path = '/.well-known/est/simplereenroll'
-        self.assertEqual((400, 'text/html', 29, None, b'An unknown error has occured.'), self.esthandler._post_process(None))
+        mock_auth.return_value = True
+        self.assertEqual((400, None, 30, None, b'An unknown error has occured.\n'), self.esthandler._post_process(None))
 
+    @patch('est_proxy.est_handler.ESTSrvHandler._auth_check')
     @patch('est_proxy.est_handler.ESTSrvHandler._cert_enroll')
-    def test_048__post_process(self, mock_enroll):
+    def test_049__post_process(self, mock_enroll, mock_auth):
         """ _post_process() - enroll but no data """
         self.esthandler.path = '/.well-known/est/simplereenroll'
+        mock_auth.return_value = True
         mock_enroll.return_value = ('error', 'cert')
-        self.assertEqual((500, 'text/html', 0, None, None), self.esthandler._post_process('data'))
+        self.assertEqual((500, None, 0, None, None), self.esthandler._post_process('data'))
 
+    @patch('est_proxy.est_handler.ESTSrvHandler._auth_check')
     @patch('est_proxy.est_handler.ESTSrvHandler._cert_enroll')
-    def test_049__post_process(self, mock_enroll):
+    def test_050__post_process(self, mock_enroll, mock_auth):
         """ _post_process() - enroll but no data """
         self.esthandler.path = '/.well-known/est/simplereenroll'
+        mock_auth.return_value = True
         mock_enroll.return_value = (None, 'cert')
         self.assertEqual((200, 'application/pkcs7-mime; smime-type=certs-only', 4, 'base64', b'cert'), self.esthandler._post_process('data'))
 
-    def test_050__cert_enroll(self):
-        """ _cert_enroll () without csr """
+    def test_051__cert_enroll(self):
+        """ _cert_enroll() without csr """
         with self.assertLogs('test_est', level='INFO') as lcm:
             self.assertEqual(('no CSR submittted', None), self.esthandler._cert_enroll(None))
         self.assertIn('ERROR:test_est:ESTSrvHandler._cert_enroll(): no csr submitted', lcm.output)
 
-    def test_051__cert_enroll(self):
-        """ _cert_enroll () error returned """
+    def test_052__cert_enroll(self):
+        """ _cert_enroll() error returned """
         ca_handler_module = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
         self.esthandler.cahandler = ca_handler_module.CAhandler
         self.esthandler.cahandler._config_load = Mock()
@@ -477,8 +494,8 @@ foo
             self.assertEqual(('error', None), self.esthandler._cert_enroll('data'))
         self.assertIn('ERROR:test_est:ESTSrvHandler._cert_enroll(): error', lcm.output)
 
-    def test_052__cert_enroll(self):
-        """ _cert_enroll () error returned """
+    def test_053__cert_enroll(self):
+        """ _cert_enroll() error returned """
         ca_handler_module = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
         self.esthandler.cahandler = ca_handler_module.CAhandler
         self.esthandler.cahandler._config_load = Mock()
@@ -488,8 +505,8 @@ foo
         self.assertIn('ERROR:test_est:ESTSrvHandler._cert_enroll(): No error but no cert returned', lcm.output)
 
     @patch('est_proxy.est_handler.ESTSrvHandler._pkcs7_convert')
-    def test_053__cert_enroll(self, mock_convert):
-        """ _cert_enroll () all ok """
+    def test_054__cert_enroll(self, mock_convert):
+        """ _cert_enroll() all ok """
         ca_handler_module = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
         self.esthandler.cahandler = ca_handler_module.CAhandler
         self.esthandler.cahandler._config_load = Mock()
@@ -497,8 +514,8 @@ foo
         mock_convert.return_value = 'pkcs7'
         self.assertEqual((None, 'pkcs7'), self.esthandler._cert_enroll('data'))
 
-    def test_054__cacerts_get(self):
-        """ _cert_enroll () error returned """
+    def test_055__cacerts_get(self):
+        """ _cert_enroll() error returned """
         ca_handler_module = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
         self.esthandler.cahandler = ca_handler_module.CAhandler
         self.esthandler.cahandler._config_load = Mock()
@@ -508,14 +525,50 @@ foo
         self.assertIn('ERROR:test_est:ESTSrvHandler._cacerts_get(): no cacerts returned from handler', lcm.output)
 
     @patch('est_proxy.est_handler.ESTSrvHandler._pkcs7_convert')
-    def test_055__cacerts_get(self, mock_convert):
-        """ _cert_enroll () error returned """
+    def test_056__cacerts_get(self, mock_convert):
+        """ _cert_enroll() error returned """
         ca_handler_module = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
         self.esthandler.cahandler = ca_handler_module.CAhandler
         self.esthandler.cahandler._config_load = Mock()
         self.esthandler.cahandler.ca_certs_get = Mock(return_value='cacert')
         mock_convert.return_value = 'pkcs7'
         self.assertEqual('pkcs7', self.esthandler._cacerts_get())
+
+    def test_057__auth_check(self):
+        """ _auth_check() neither clientauth nor srp auth """
+        obj = Mock()
+        obj.session = Mock()
+        obj.session.clientCertChain = None
+        obj.session.srpUsername = None
+        self.esthandler.connection = obj
+        self.assertFalse(self.esthandler._auth_check())
+
+    def test_058__auth_check(self):
+        """ _auth_check() clientauth """
+        obj = Mock()
+        obj.session = Mock()
+        obj.session.clientCertChain = 'clientCertChain'
+        obj.session.srpUsername = None
+        self.esthandler.connection = obj
+        self.assertTrue(self.esthandler._auth_check())
+
+    def test_059__auth_check(self):
+        """ _auth_check() clientauth """
+        obj = Mock()
+        obj.session = Mock()
+        obj.session.clientCertChain = None
+        obj.session.srpUsername = 'srpUsername'
+        self.esthandler.connection = obj
+        self.assertTrue(self.esthandler._auth_check())
+
+    def test_060__auth_check(self):
+        """ _auth_check() clientauth """
+        obj = Mock()
+        obj.session = Mock()
+        obj.session.clientCertChain = 'clientCertChain'
+        obj.session.srpUsername = 'srpUsername'
+        self.esthandler.connection = obj
+        self.assertTrue(self.esthandler._auth_check())
 
 if __name__ == '__main__':
     unittest.main()

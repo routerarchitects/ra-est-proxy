@@ -16,6 +16,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
     cfg_file = None
     logger = None
     openssl_bin = None
+    connection = None
     protocol_version = "HTTP/1.1"
     server_version = 'est_proxy'
     sys_version = __version__
@@ -35,6 +36,11 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         if not self.openssl_bin:
             self._config_load()
         try:
+            # store connection settings
+            self.connection = args[0]
+        except BaseException as err_:
+            self.logger.error('ESTSrvHandler.__init__ store connection settings failed: {0}'.format(err_))
+        try:
             # Instantiate the superclass
             super().__init__(*args, **kwargs)
         except BaseException as err_:
@@ -50,10 +56,19 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
             if ca_certs:
                 ca_pkcs7 = self._pkcs7_convert(ca_certs)
             else:
-                self.logger.error('ESTSrvHandler._cacerts_get(): no cacerts returned from handler')                
+                self.logger.error('ESTSrvHandler._cacerts_get(): no cacerts returned from handler')
                 ca_pkcs7 = None
         self.logger.debug('ESTSrvHandler._cacerts_get() ended with: {0}'.format(bool(ca_pkcs7)))
         return ca_pkcs7
+
+    def _auth_check(self):
+        """ split ca_certs """
+        self.logger.debug('ESTSrvHandler._auth_check()')
+        authenticated = False
+        if self.connection.session.clientCertChain or self.connection.session.srpUsername:
+            authenticated = True
+        self.logger.debug('ESTSrvHandler._auth_check() ended with: {0}'.format(authenticated))
+        return authenticated
 
     def _cacerts_split(self, ca_certs):
         """ split ca_certs """
@@ -212,7 +227,8 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
     def _set_response(self, code=404, content_type='text/html', clength=0, encoding=None):
         """ set response method """
         self.send_response(code)
-        self.send_header('Content-Type', content_type)
+        if content_type:
+            self.send_header('Content-Type', content_type)
         if encoding:
             self.send_header('Content-Transfer-Encoding', encoding)
         if clength:
@@ -222,7 +238,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
 
     def _get_process(self):
         """ main method to process get requests """
-        self.logger.debug('ESTSrvHandler.get_process %s', self.path)
+        self.logger.debug('ESTSrvHandler._get_process %s', self.path)
         content = None
         content_length = 0
         encoding = None
@@ -251,27 +267,33 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
 
     def _post_process(self, data):
         """ main method to process post requests """
-        self.logger.debug('ESTSrvHandler.get_process %s', self.path)
+        self.logger.debug('ESTSrvHandler._post_process %s', self.path)
         content = None
         content_length = 0
+        content_type = None
         encoding = None
         code = 400
 
-        if data and (self.path == '/.well-known/est/simpleenroll' or self.path == '/.well-known/est/simplereenroll'):
-            # enroll certificate
-            (error, cert) = self._cert_enroll(data)
-            if not error:
-                code = 200
-                content_type = 'application/pkcs7-mime; smime-type=certs-only'
-                content = cert
-                encoding = 'base64'
+        # check if connection is poperly authenticated
+        connection_authenticated = self._auth_check()
+
+        if connection_authenticated:
+            if data and (self.path == '/.well-known/est/simpleenroll' or self.path == '/.well-known/est/simplereenroll'):
+                # enroll certificate
+                (error, cert) = self._cert_enroll(data)
+                if not error:
+                    code = 200
+                    content_type = 'application/pkcs7-mime; smime-type=certs-only'
+                    content = cert
+                    encoding = 'base64'
+                else:
+                    code = 500
             else:
-                code = 500
-                content_type = 'text/html'
+                code = 400
+                content = 'An unknown error has occured.\n'
         else:
-            code = 400
-            content_type = 'text/html'
-            content = 'An unknown error has occured.'
+            code = 401
+            content = 'The server was unable to authorize the request.\n'
 
         if content:
             content_length = len(str(content))
