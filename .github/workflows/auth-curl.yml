@@ -50,8 +50,7 @@ jobs:
     - name: "[ Test-01 ] enroll certificate via clientauth"
       run: |
         echo TST_01RC=$(docker run -v /tmp/certs:/tmp/certs -i --rm --network est curlimages/curl https://est-proxy.est:17443/.well-known/est/simpleenroll --key /tmp/certs/estclient.key.pem --cert /tmp/certs/estclient.crt.pem --cacert /tmp/certs/cacerts.pem --data-binary "@/tmp/certs/estclient.csr" -H "Content-Type:application/pkcs10" -o /tmp/certs/tmp.estclient.p7b -o /dev/null -w "%{http_code}") >> $GITHUB_ENV
-        echo "Test-01 is ${{ env.TST_01RC }}"
-        
+
     - name: "[ Test-01 ] check result "
       if: env.TST_01RC != 200
       run: |
@@ -61,7 +60,6 @@ jobs:
     - name: "[ Test-02 ] failed enrollment due to missing clientauth"
       run: |
         echo TST_02RC=$(docker run -v /tmp/certs:/tmp/certs -i --rm --network est curlimages/curl https://est-proxy.est:17443/.well-known/est/simpleenroll --silent --cacert /tmp/certs/cacerts.pem --data-binary "@/tmp/certs/estclient.csr" -H "Content-Type:application/pkcs10" -o /tmp/certs/tmp.estclient.p7b -o /dev/null -w "%{http_code}") >> $GITHUB_ENV
-        echo "Test-02 is ${{ env.TST_02RC }}"
 
     - name: "[ Test-02 ] check result "
       if: env.TST_02RC != 401

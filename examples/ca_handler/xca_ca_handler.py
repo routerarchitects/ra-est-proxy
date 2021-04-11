@@ -8,7 +8,7 @@ import uuid
 import json
 from OpenSSL import crypto
 # pylint: disable=E0401
-from est_proxy.helper import config_load, build_pem_file, uts_now, uts_to_date_utc, b64_encode, b64_decode, b64_url_recode, cert_serial_get, convert_string_to_byte, convert_byte_to_string, csr_cn_get, csr_san_get
+from est_proxy.helper import config_load, build_pem_file, uts_now, uts_to_date_utc, b64_encode, b64_decode, cert_serial_get, convert_string_to_byte, convert_byte_to_string, csr_cn_get, csr_san_get
 
 def dict_from_row(row):
     """ small helper to convert the output of a "select" command into a dictionary """
@@ -367,9 +367,8 @@ class CAhandler(object):
         self.logger.debug('CAhandler.ca_certs_get()')
 
         # load ca cert and key
-        (ca_key, ca_cert, ca_id) = self._ca_load()
+        (_ca_key, ca_cert, _ca_id) = self._ca_load()
         pem_chain = self._pemcertchain_generate('', convert_byte_to_string(crypto.dump_certificate(crypto.FILETYPE_PEM, ca_cert)))
-
         return pem_chain
 
     def _pemcertchain_generate(self, ee_cert, issuer_cert):
@@ -597,13 +596,10 @@ class CAhandler(object):
 
     def enroll(self, csr):
         """ enroll certificate  """
+        # pylint: disable=R0914
         self.logger.debug('CAhandler.enroll()')
 
-        cert_bundle = None
-        cert_raw = None
-
         error = self._config_check()
-
         if not error:
 
             request_name = self._requestname_get(csr)
@@ -674,7 +670,7 @@ class CAhandler(object):
                 cert = convert_byte_to_string(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
 
         self.logger.debug('Certificate.enroll() ended')
-        return(error, cert)
+        return(error, cert, None)
 
     def _extension_list_generate(self, template_dic, cert, ca_cert):
         """ set extension list """

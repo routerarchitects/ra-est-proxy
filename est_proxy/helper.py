@@ -71,6 +71,11 @@ def ca_handler_get(logger, ca_handler_name):
     logger.debug('ca_handler_get() ended with: {0}'.format(ca_handler_name))
     return ca_handler_name
 
+def cert_pem2der(pem_file):
+    """ convert certificate pem to der """
+    certobj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, pem_file)
+    return OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_ASN1, certobj)
+
 def cert_serial_get(logger, certificate):
     """ get serial number form certificate """
     logger.debug('cert_serial_get()')
@@ -187,7 +192,7 @@ def logger_setup(debug, cfg_file=None):
     try:
         config_dic = config_load(cfg_file=cfg_file)
         log_format = config_dic.get('LOGGING', 'log_format', fallback='%(message)s')
-    except:
+    except BaseException:
         log_format = '%(message)s'
 
     logging.basicConfig(format=log_format, datefmt="%Y-%m-%d %H:%M:%S", level=log_mode)

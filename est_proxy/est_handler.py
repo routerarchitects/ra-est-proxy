@@ -104,7 +104,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         if csr:
             with self.cahandler(self.cfg_file, self.logger) as ca_handler:
                 # get certs
-                (error, cert) = ca_handler.enroll(csr)
+                (error, cert, _poll_identifier) = ca_handler.enroll(csr)
                 if not error and cert:
                     cert_pkcs7 = self._pkcs7_convert(cert, pkcs7_clean=True)
                 else:
