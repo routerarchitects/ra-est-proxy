@@ -1,4 +1,4 @@
-name: authentication tests by using curl
+name: EST protocol tests by using curl
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   est_proto_curl:
-    name: "auth_curl"
+    name: "est_proto_curl"
     runs-on: ubuntu-latest
     steps:
     - name: "checkout GIT"
@@ -47,27 +47,20 @@ jobs:
         sudo openssl req -outform der -in /tmp/certs/estclient.csr.pem -out /tmp/certs/estclient.csr.der
         sudo base64 /tmp/certs/estclient.csr.der > /tmp/certs/estclient.csr
 
-    - name: "[ Test-01 ] enroll certificate via clientauth"
-      run: |
-        echo TST_01RC=$(docker run -v /tmp/certs:/tmp/certs -i --rm --network est curlimages/curl https://est-proxy.est:17443/.well-known/est/simpleenroll --key /tmp/certs/estclient.key.pem --cert /tmp/certs/estclient.crt.pem --cacert /tmp/certs/cacerts.pem --data-binary "@/tmp/certs/estclient.csr" -H "Content-Type:application/pkcs10" -o /tmp/certs/tmp.estclient.p7b -o /dev/null -w "%{http_code}") >> $GITHUB_ENV
-        echo "Test-01 is ${{ env.TST_01RC }}"
-        
-    - name: "[ Test-01 ] check result "
-      if: env.TST_01RC != 200
-      run: |
-        echo "Test-01 is ${{ env.TST_01RC }}"
-        exit 1
+    - name: "[ Test ] fetch CA-certificates"
+      run: docker run -v /tmp/certs:/tmp/certs -i --rm --network est curlimages/curl -X GET https://est-proxy.est:17443/.well-known/est/cacerts --cacert /tmp/certs/cacerts.pem
 
-    - name: "[ Test-02 ] failed enrollment due to missing clientauth"
+    - name: "[ Test ] enroll certificate"
       run: |
-        echo TST_02RC=$(docker run -v /tmp/certs:/tmp/certs -i --rm --network est curlimages/curl https://est-proxy.est:17443/.well-known/est/simpleenroll --silent --cacert /tmp/certs/cacerts.pem --data-binary "@/tmp/certs/estclient.csr" -H "Content-Type:application/pkcs10" -o /tmp/certs/tmp.estclient.p7b -o /dev/null -w "%{http_code}") >> $GITHUB_ENV
-        echo "Test-02 is ${{ env.TST_02RC }}"
+        docker run -v /tmp/certs:/tmp/certs -i --rm --network est curlimages/curl https://est-proxy.est:17443/.well-known/est/simpleenroll --key /tmp/certs/estclient.key.pem --cert /tmp/certs/estclient.crt.pem --cacert /tmp/certs/cacerts.pem --data-binary "@/tmp/certs/estclient.csr" -H "Content-Type:application/pkcs10" -o /tmp/certs/tmp.estclient.p7b --verbose
+        sudo ls -la /tmp/certs
 
-    - name: "[ Test-02 ] check result "
-      if: env.TST_02RC != 401
+    - name: "[ Test ] reenroll certificate"
       run: |
-        echo "Test-02 is ${{ env.TST_02RC }}"
-        exit 1
+        sudo base64 -d /tmp/certs/tmp.estclient.p7b > /tmp/certs/estclient.der.p7b
+        sudo openssl pkcs7 -print_certs -inform DER -in /tmp/certs/estclient.der.p7b -out /tmp/certs/estclient.crt
+        docker run -v /tmp/certs:/tmp/certs -i --rm --network est curlimages/curl https://est-proxy.est:17443/.well-known/est/simplereenroll --key /tmp/certs/estclient.key --cert /tmp/certs/estclient.crt --cacert /tmp/certs/cacerts.pem --data-binary "@/tmp/certs/estclient.csr" -H "Content-Type:application/pkcs10" -o /tmp/certs/estclient.crt.new --verbose
+        sudo ls -la /tmp/certs
 
     - name: "[ * ] collecting test logs"
       if: ${{ failure() }}
