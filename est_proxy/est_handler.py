@@ -28,7 +28,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
             self.cfg_file = args[2].__dict__['cfg_file']
         except BaseException:
             # self.logger.error('ESTSrvHandler.__init__ cfg_file load from args failed')
-            self.cfg_file = 'acme_proxy.cfg'
+            self.cfg_file = 'est_proxy.cfg'
         try:
             self.logger = args[2].__dict__['logger']
         except BaseException:
@@ -40,11 +40,10 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
             self.connection = args[0]
         except BaseException as err_:
             self.logger.error('ESTSrvHandler.__init__ store connection settings failed: {0}'.format(err_))
-        try:
-            # Instantiate the superclass
-            super().__init__(*args, **kwargs)
-        except BaseException as err_:
-            self.logger.error('ESTSrvHandler.__init__ superclass init failed: {0}'.format(err_))
+        #try:
+        super().__init__(*args, **kwargs)
+        #except BaseException as err_:
+        #    self.logger.error('ESTSrvHandler.__init__ superclass init failed: {0}'.format(err_))
 
     def _cacerts_get(self):
         """ get ca certificates """
@@ -162,19 +161,19 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         self.logger.debug('ESTSrvHandler._pkcs7_clean()')
         if isinstance(pkcs7_struc, bytes):
             pkcs7_struc = pkcs7_struc.decode('utf-8')
+        output = ''
         if pkcs7_struc and isinstance(pkcs7_struc, str):
             # remove pkcs7 start end end tags
+            pkcs7_struc = pkcs7_struc.replace('-----BEGIN PKCS7-----\n', '')
+            # do not remove CR from end tag as it must be part of the content
             pkcs7_struc = pkcs7_struc.replace('-----END PKCS7-----', '')
-            pkcs7_struc = pkcs7_struc.replace('-----BEGIN PKCS7-----', '')
-            pkcs7_struc = "\n".join([s for s in pkcs7_struc.split("\n") if s])
         return pkcs7_struc
 
-    def _pkcs7_convert(self, ca_certs, pkcs7_clean=False):
+    def _pkcs7_convert(self, ca_certs, pkcs7_clean=True):
         """ convert to pkcs#7 """
         self.logger.debug('ESTSrvHandler._pkcs7_convert()')
 
         pkcs7_struc = None
-
         if ca_certs:
             # split pem-chain into certs
             ca_list = self._cacerts_split(ca_certs)
@@ -185,8 +184,10 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
                 fso = tempfile.NamedTemporaryFile(mode='w+', delete=False)
                 pkcs7_file = fso.name
                 fso.close()
+
                 # create command-line to convert
                 openssl_cmd = self._opensslcmd_build(file_names, pkcs7_file)
+
                 # run command and capture return code
                 rcode = subprocess.call(openssl_cmd)
                 if rcode == 0:
@@ -315,8 +316,30 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         """ this is a http post """
         self.logger.debug('ESTSrvHandler.do_POST %s path: %s', self.client_address, self.path)
-        content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
-        post_data = self.rfile.read(content_length) # <--- Gets the data itself
+
+        if "Content-Length" in self.headers:
+            content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
+            post_data = self.rfile.read(content_length) # <--- Gets the data itself
+        elif "chunked" in self.headers.get("Transfer-Encoding", ""):
+            post_data = ''
+            while True:
+                line = self.rfile.readline().strip()
+                # print('line', line)
+                chunk_length = len(line)
+
+                if chunk_length != 0:
+                    # read data from stack
+                    chunk = self.rfile.read(chunk_length).decode('utf-8')
+                    post_data += chunk
+                    # Each chunk is followed by an additional empty newline
+                    # that we have to consume.
+                    self.rfile.readline()
+
+                # Finally, a chunk size of 0 is an end indication
+                if chunk_length == 0:
+                    # post_data = post_data.strip().encode('utf-8')
+                    post_data = post_data.encode('utf-8')
+                    break
 
         # self.logger.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n", str(self.path), str(self.headers), post_data.decode('utf-8'))
         # process requests
