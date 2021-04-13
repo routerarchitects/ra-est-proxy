@@ -132,7 +132,7 @@ foo
 
     def test_014___pkcs7_clean(self):
         """ _pkcs7_clean() certs ok """
-        pkcs7 = '-----BEGIN PKCS7-----foo-----END PKCS7-----'
+        pkcs7 = '-----BEGIN PKCS7-----\nfoo-----END PKCS7-----'
         result = 'foo'
         self.assertEqual(result, self.esthandler._pkcs7_clean(pkcs7))
 
@@ -144,7 +144,7 @@ foo
 
     def test_016___pkcs7_clean(self):
         """ _pkcs7_clean() just BEGIN tag """
-        pkcs7 = '-----BEGIN PKCS7-----foo'
+        pkcs7 = '-----BEGIN PKCS7-----\nfoo'
         result = 'foo'
         self.assertEqual(result, self.esthandler._pkcs7_clean(pkcs7))
 
@@ -160,7 +160,7 @@ foo
 
     def test_019___pkcs7_clean(self):
         """ _pkcs7_clean() pcs#7 byte """
-        pkcs7 = b'-----BEGIN PKCS7-----foo-----END PKCS7-----'
+        pkcs7 = b'-----BEGIN PKCS7-----\nfoo-----END PKCS7-----'
         result = 'foo'
         self.assertEqual(result, self.esthandler._pkcs7_clean(pkcs7))
 
@@ -489,7 +489,7 @@ foo
         ca_handler_module = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
         self.esthandler.cahandler = ca_handler_module.CAhandler
         self.esthandler.cahandler._config_load = Mock()
-        self.esthandler.cahandler.enroll = Mock(return_value=['error', 'cert'])
+        self.esthandler.cahandler.enroll = Mock(return_value=['error', 'cert', 'poll_identifier'])
         with self.assertLogs('test_est', level='INFO') as lcm:
             self.assertEqual(('error', None), self.esthandler._cert_enroll('data'))
         self.assertIn('ERROR:test_est:ESTSrvHandler._cert_enroll(): error', lcm.output)
@@ -499,7 +499,7 @@ foo
         ca_handler_module = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
         self.esthandler.cahandler = ca_handler_module.CAhandler
         self.esthandler.cahandler._config_load = Mock()
-        self.esthandler.cahandler.enroll = Mock(return_value=[None, None])
+        self.esthandler.cahandler.enroll = Mock(return_value=[None, None, 'poll_identifier'])
         with self.assertLogs('test_est', level='INFO') as lcm:
             self.assertEqual(('No error but no cert returned', None), self.esthandler._cert_enroll('data'))
         self.assertIn('ERROR:test_est:ESTSrvHandler._cert_enroll(): No error but no cert returned', lcm.output)
@@ -510,7 +510,7 @@ foo
         ca_handler_module = importlib.import_module('examples.ca_handler.skeleton_ca_handler')
         self.esthandler.cahandler = ca_handler_module.CAhandler
         self.esthandler.cahandler._config_load = Mock()
-        self.esthandler.cahandler.enroll = Mock(return_value=[None, 'cert'])
+        self.esthandler.cahandler.enroll = Mock(return_value=[None, 'cert', 'poll_identifier'])
         mock_convert.return_value = 'pkcs7'
         self.assertEqual((None, 'pkcs7'), self.esthandler._cert_enroll('data'))
 
