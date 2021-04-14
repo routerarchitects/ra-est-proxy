@@ -278,6 +278,9 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         # check if connection is poperly authenticated
         connection_authenticated = self._auth_check()
 
+        #data = "\n".join(data.decode('utf-8').splitlines()).encode()
+        #print(data)
+
         if connection_authenticated:
             if data and (self.path == '/.well-known/est/simpleenroll' or self.path == '/.well-known/est/simplereenroll'):
                 # enroll certificate
@@ -318,27 +321,31 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         self.logger.debug('ESTSrvHandler.do_POST %s path: %s', self.client_address, self.path)
 
         if "Content-Length" in self.headers:
-            content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
-            post_data = self.rfile.read(content_length) # <--- Gets the data itself
+            #  gets the size of data
+            content_length = int(self.headers['Content-Length'])
+            # gets the data itself
+            post_data = self.rfile.read(content_length)
         elif "chunked" in self.headers.get("Transfer-Encoding", ""):
-            post_data = ''
+            self.logger.debug('ESTSrvHandler.do_POST() chunk encoding detected...')
+            post_data = b''
             while True:
-                line = self.rfile.readline().strip()
-                # print('line', line)
-                chunk_length = len(line)
+                # line = self.rfile.readline().strip()
+                line = self.rfile.readline()
+                # chunk is encoded in hex in the first line of request data
+                chunk_length = int(line, 16)
+                self.logger.debug('chunk_length: {}'.format(chunk_length))
 
                 if chunk_length != 0:
-                    # read data from stack
-                    chunk = self.rfile.read(chunk_length).decode('utf-8')
+                    # read data from stack and add them to data variable
+                    chunk = self.rfile.read(chunk_length)
                     post_data += chunk
-                    # Each chunk is followed by an additional empty newline
-                    # that we have to consume.
-                    self.rfile.readline()
+
+                # Each chunk is followed by an additional empty newline
+                # that we have to consume.
+                self.rfile.readline()
 
                 # Finally, a chunk size of 0 is an end indication
                 if chunk_length == 0:
-                    # post_data = post_data.strip().encode('utf-8')
-                    post_data = post_data.encode('utf-8')
                     break
 
         # self.logger.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n", str(self.path), str(self.headers), post_data.decode('utf-8'))
