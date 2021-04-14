@@ -62,6 +62,11 @@ jobs:
         docker run -v /tmp/certs:/tmp/certs -i --rm --network est curlimages/curl https://est-proxy.est:17443/.well-known/est/simplereenroll --key /tmp/certs/estclient.key --cert /tmp/certs/estclient.crt --cacert /tmp/certs/cacerts.pem --data-binary "@/tmp/certs/estclient.csr" -H "Content-Type:application/pkcs10" -o /tmp/certs/estclient.crt.new --verbose
         sudo ls -la /tmp/certs
 
+    - name: "[ Test ] enroll certificate with Transfer-Encoding: chunked"
+      run: |
+        docker run -v /tmp/certs:/tmp/certs -i --rm --network est curlimages/curl https://est-proxy.est:17443/.well-known/est/simpleenroll --key /tmp/certs/estclient.key.pem --cert /tmp/certs/estclient.crt.pem --cacert /tmp/certs/cacerts.pem --data-binary "@/tmp/certs/estclient.csr" -H "Content-Type:application/pkcs10" -o /tmp/certs/tmp.estclient.p7b  --header "Transfer-Encoding: chunked" --verbose
+        sudo ls -la /tmp/certs
+
     - name: "[ * ] collecting test logs"
       if: ${{ failure() }}
       run: |
