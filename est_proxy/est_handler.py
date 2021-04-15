@@ -161,7 +161,6 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         self.logger.debug('ESTSrvHandler._pkcs7_clean()')
         if isinstance(pkcs7_struc, bytes):
             pkcs7_struc = pkcs7_struc.decode('utf-8')
-        output = ''
         if pkcs7_struc and isinstance(pkcs7_struc, str):
             # remove pkcs7 start end end tags
             pkcs7_struc = pkcs7_struc.replace('-----BEGIN PKCS7-----\n', '')
@@ -320,7 +319,6 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         """ this is a http post """
         self.logger.debug('ESTSrvHandler.do_POST %s path: %s', self.client_address, self.path)
 
-        print(self.headers)
         if "Content-Length" in self.headers:
             #  gets the size of data
             content_length = int(self.headers['Content-Length'])
@@ -329,25 +327,26 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         elif "chunked" in self.headers.get("Transfer-Encoding", ""):
             self.logger.debug('ESTSrvHandler.do_POST() chunk encoding detected...')
             post_data = b''
+            # i had to implement my on chunk method as i had problems to read the data end
+            # send by globalsign estclient
+            # two loops - outer loop looks for a content lenght 0
+            #           - inner loop looks for b'' indicating a chunk end
             while True:
-                # line = self.rfile.readline().strip()
-                line = self.rfile.readline()
-                # chunk is encoded in hex in the first line of request data
+                line = self.rfile.readline().strip()
+                # first line in a sequence is usually the content length in hex followed by data
                 chunk_length = int(line, 16)
-                self.logger.debug('chunk_length: {0}'.format(chunk_length))
-
-                if chunk_length != 0:
-                    # read data from stack and add them to data variable
-                    chunk = self.rfile.read(chunk_length)
-                    self.logger.debug('read: {0}'.format(len(chunk)))
-                    post_data += chunk
-
-                # Each chunk is followed by an additional empty newline
-                # that we have to consume.
-                self.rfile.readline()
-
+                self.logger.debug('ESTSrvHandler.do_POST() chunk with length of {0} detected.'.format(chunk_length))
+                while True:
+                    # read data line by line and look for b'' indicateing chunk end
+                    line = self.rfile.readline().strip()
+                    if line != b'':
+                        post_data += line
+                    else:
+                        self.logger.debug('ESTSrvHandler.do_POST() chunk end detected.')
+                        break
                 # Finally, a chunk size of 0 is an end indication
                 if chunk_length == 0:
+                    self.logger.debug('ESTSrvHandler.do_POST() end sequence detected.')
                     break
 
         # self.logger.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n", str(self.path), str(self.headers), post_data.decode('utf-8'))
