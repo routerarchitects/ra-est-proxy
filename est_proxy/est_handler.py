@@ -320,6 +320,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         """ this is a http post """
         self.logger.debug('ESTSrvHandler.do_POST %s path: %s', self.client_address, self.path)
 
+        print(self.headers)
         if "Content-Length" in self.headers:
             #  gets the size of data
             content_length = int(self.headers['Content-Length'])
@@ -333,11 +334,12 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
                 line = self.rfile.readline()
                 # chunk is encoded in hex in the first line of request data
                 chunk_length = int(line, 16)
-                self.logger.debug('chunk_length: {}'.format(chunk_length))
+                self.logger.debug('chunk_length: {0}'.format(chunk_length))
 
                 if chunk_length != 0:
                     # read data from stack and add them to data variable
                     chunk = self.rfile.read(chunk_length)
+                    self.logger.debug('read: {0}'.format(len(chunk)))
                     post_data += chunk
 
                 # Each chunk is followed by an additional empty newline
