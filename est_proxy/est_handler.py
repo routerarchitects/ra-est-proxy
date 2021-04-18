@@ -131,8 +131,8 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         if 'CAhandler' in config_dic and 'handler_file' in config_dic['CAhandler']:
             try:
                 ca_handler_module = importlib.import_module(ca_handler_get(self.logger, config_dic['CAhandler']['handler_file']))
-            except BaseException:
-                self.logger.error('ESTSrvHandler._config_load(): CAhandler {0} could not get loaded. Loading default hander...'.format(config_dic['CAhandler']['handler_file']))
+            except BaseException as err_:
+                self.logger.error('ESTSrvHandler._config_load(): CAhandler {0} could not get loaded. with error: {1}\nLoading default hander...'.format(config_dic['CAhandler']['handler_file'], err_))
                 try:
                     ca_handler_module = importlib.import_module('est_proxy.ca_handler')
                 except BaseException:
