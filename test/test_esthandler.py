@@ -405,8 +405,8 @@ foo
             self.esthandler._config_load()
         self.assertFalse(self.esthandler.cahandler)
         self.assertEqual('openssl', self.esthandler.openssl_bin)
-        self.assertIn("ERROR:test_est:ESTSrvHandler._config_load(): CAhandler handler_file could not get loaded. Loading default hander...", lcm.output)
-        self.assertIn("ERROR:test_est:ESTSrvHandler._config_load():  Loading default hander failed.", lcm.output)
+        self.assertIn("ERROR:test_est:ESTSrvHandler._config_load(): CAhandler handler_file could not get loaded. with error: No module named 'handler_file'\nLoading default hander...", lcm.output)
+        self.assertIn("ERROR:test_est:ESTSrvHandler._config_load():  Loading default handler failed.", lcm.output)
 
     @patch('importlib.import_module')
     @patch('est_proxy.est_handler.config_load')
@@ -420,7 +420,7 @@ foo
             self.esthandler._config_load()
         self.assertTrue(self.esthandler.cahandler)
         self.assertEqual('openssl', self.esthandler.openssl_bin)
-        self.assertIn("ERROR:test_est:ESTSrvHandler._config_load(): CAhandler handler_file could not get loaded. Loading default hander...", lcm.output)
+        self.assertIn("ERROR:test_est:ESTSrvHandler._config_load(): CAhandler handler_file could not get loaded. with error: exc_cahandlerconfigload\nLoading default hander...", lcm.output)
 
     @patch('importlib.import_module')
     @patch('est_proxy.est_handler.config_load')

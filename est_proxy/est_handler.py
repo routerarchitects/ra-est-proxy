@@ -136,7 +136,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
                 try:
                     ca_handler_module = importlib.import_module('est_proxy.ca_handler')
                 except BaseException:
-                    self.logger.error('ESTSrvHandler._config_load():  Loading default hander failed.')
+                    self.logger.error('ESTSrvHandler._config_load():  Loading default handler failed.')
                     ca_handler_module = None
         else:
             if 'CAhandler' in config_dic:
