@@ -2,7 +2,7 @@
 <!-- wiki-title How to create your own CA Handler -->
 # How to create your own CA-Handler
 
-Creating your own CA-handler should be pretty easy.  All you need to do is to create your own ca_handler.py with a "CAhandler" class containing the following methods required by acme2certifier:
+Creating your own CA-handler should be pretty easy.  All you need to do is to create your own ca_handler.py with a "CAhandler" class containing the following methods required by `est_proxy`:
 
 - __ca_certs_get__: to fetch CA certificates from CA server
 - __enroll__: to enroll a new certificate from CA server
@@ -10,7 +10,7 @@ Creating your own CA-handler should be pretty easy.  All you need to do is to cr
 
 The [skeleton_ca_handler.py](../examples/ca_handler/skeleton_ca_handler.py) contains a skeleton which can be used to create customized ca_handlers.
 
-The below skeleton describes the different input parameters given by acme2certifier as well as the expected return values.
+The below skeleton describes the different input parameters given by est_proxy as well as the expected return values.
 
 ```python
 class CAhandler(object):
@@ -78,5 +78,5 @@ class CAhandler(object):
         return(error, certificate, poll_identifier, rejected)
 ```
 
-You can add additional methods according to your needs. You can also add configuration options to acme_srv.cfg allowing you to configure the ca_handler according to your needs.
+You can add additional methods according to your needs. You can also add configuration options to est_proxy.cfg allowing you to configure the ca_handler according to your needs.
 Check the [certifier_ca_handler.py](../examples/ca_handler/certifier_ca_handler.py) especially the `_config_load()` method for further details.

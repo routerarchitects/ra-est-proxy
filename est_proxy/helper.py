@@ -191,7 +191,7 @@ def logger_setup(debug, cfg_file=None):
     # define log format
     try:
         config_dic = config_load(cfg_file=cfg_file)
-        log_format = config_dic.get('LOGGING', 'log_format', fallback='%(message)s')
+        log_format = config_dic.get('Logging', 'log_format', fallback='%(message)s')
     except BaseException:
         log_format = '%(message)s'
 

@@ -59,7 +59,7 @@ The response to this call will show a dictionary containing the list of CAs incl
     {
       "href": ""<url>/v1/cas/PnOBdgHSiz5c1sR0MsZMtw",
       "name": "ca_name",
-      "description": "Test CA for acme2certfier",
+      "description": "Test CA for est_proxy",
       "status": "active",
       "type": "online",
       "certificates": {
