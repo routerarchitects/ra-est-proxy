@@ -8,7 +8,7 @@ Est_proxy needs to store its configuration file (`est_proxy.cfg`), certificates,
 
 ## Installation via dockerhub or ghcr.io
 
-There are ready made images available at [dockerhub](https://hub.docker.com/repository/docker/grindsa/est_proxy) and [ghcr.io](https://github.com/users/grindsa/packages/container/package/est_proxy) which can be installed via regular `docker pull` command.
+There are ready made images available at [dockerhub](https://hub.docker.com/repository/docker/grindsa/est_proxy) and [ghcr.io](https://github.com/grindsa?tab=packages&ecosystem=container) which can be installed via regular `docker pull` command.
 
 ```bash
 user@docker-host:~$ docker pull grindsa/est_proxy
