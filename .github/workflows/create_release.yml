@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - "master"
+      - "main"
 
 name: Create Release
 
@@ -43,6 +43,6 @@ jobs:
           # release_name: hahohe ${{ env.TAG_NAME }}
           # body_path: body.txt
           body: |
-            [Changelog](https://github.com/grindsa/est_proxy/blob/master/CHANGES.md)
+            [Changelog](https://github.com/grindsa/est_proxy/blob/main/CHANGES.md)
           draft: false
           prerelease: false
