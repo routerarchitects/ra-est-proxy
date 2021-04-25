@@ -48,36 +48,36 @@ class HelperTestCases(unittest.TestCase):
         self.assertEqual({}, self.hssrv_options_get(self.logger, task, config_dic))
 
     def test_003_hssrv_options_get(self):
-        """ test handshake options empty config dic ClientAuth task """
+        """ test handshake options empty config dic Daemon task """
         config_dic = {}
-        task = 'ClientAuth'
-        expected_log = 'ERROR:test_est:Helper.hssrv_options_get(): ClientAuth specified but not configured in config file'
+        task = 'Daemon'
+        expected_log = 'ERROR:test_est:Helper.hssrv_options_get(): Daemon specified but not configured in config file'
         with self.assertLogs('test_est', level='INFO') as lcm:
             self.assertEqual({}, self.hssrv_options_get(self.logger, task, config_dic))
         self.assertIn(expected_log, lcm.output)
 
     def test_004_hssrv_options_get(self):
-        """ test handshake options empty config dic ClientAuth task """
-        config_dic = {'ClientAuth': {'foo': 'bar'}}
-        task = 'ClientAuth'
-        expected_log = 'ERROR:test_est:Helper.hssrv_options_get(): incomplete ClientAuth configuration in config file'
+        """ test handshake options empty config dic Daemon task """
+        config_dic = {'Daemon': {'foo': 'bar'}}
+        task = 'Daemon'
+        expected_log = 'ERROR:test_est:Helper.hssrv_options_get(): incomplete Daemon configuration in config file'
         with self.assertLogs('test_est', level='INFO') as lcm:
             self.assertEqual({}, self.hssrv_options_get(self.logger, task, config_dic))
         self.assertIn(expected_log, lcm.output)
 
     def test_005_hssrv_options_get(self):
-        """ test handshake options empty config dic ClientAuth task """
-        config_dic = {'ClientAuth': {'cert_file': 'cert_file', 'foo': 'bar'}}
-        task = 'ClientAuth'
-        expected_log = 'ERROR:test_est:Helper.hssrv_options_get(): incomplete ClientAuth configuration in config file'
+        """ test handshake options empty config dic Daemon task """
+        config_dic = {'Daemon': {'cert_file': 'cert_file', 'foo': 'bar'}}
+        task = 'Daemon'
+        expected_log = 'ERROR:test_est:Helper.hssrv_options_get(): incomplete Daemon configuration in config file'
         with self.assertLogs('test_est', level='INFO') as lcm:
             self.assertEqual({}, self.hssrv_options_get(self.logger, task, config_dic))
         self.assertIn(expected_log, lcm.output)
 
     def test_006_hssrv_options_get(self):
-        """ test handshake options empty config dic ClientAuth task """
-        config_dic = {'ClientAuth': {'cert_file': 'cert_file', 'key_file': 'key_file'}}
-        task = 'ClientAuth'
+        """ test handshake options empty config dic Daemon task """
+        config_dic = {'Daemon': {'cert_file': 'cert_file', 'key_file': 'key_file'}}
+        task = 'Daemon'
         foo_ = {'reqCert': True, 'sni': None, 'privateKey': 'key_file', 'certChain': 'cert_file', 'alpn': [bytearray(b'http/1.1')]}
         self.assertTrue(foo_.items() <= self.hssrv_options_get(self.logger, task, config_dic).items())
 

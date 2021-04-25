@@ -215,21 +215,21 @@ def hssrv_options_get(logger, task, config_dic):
     #                            for item in cipher.split(',')]
 
     option_dic = {}
-    if task == 'ClientAuth':
-        if 'ClientAuth' in config_dic:
-            if 'cert_file' in config_dic['ClientAuth'] and 'key_file' in config_dic['ClientAuth']:
-                # logger.error('Helper.hssrv_options_get(): ClientAuth specified but not configured in config file')
-                option_dic['certChain'] = config_dic['ClientAuth']['cert_file']
-                option_dic['privateKey'] = config_dic['ClientAuth']['key_file']
+    if task == 'Daemon':
+        if 'Daemon' in config_dic:
+            if 'cert_file' in config_dic['Daemon'] and 'key_file' in config_dic['Daemon']:
+                # logger.error('Helper.hssrv_options_get(): Daemon specified but not configured in config file')
+                option_dic['certChain'] = config_dic['Daemon']['cert_file']
+                option_dic['privateKey'] = config_dic['Daemon']['key_file']
                 option_dic['sessionCache'] = SessionCache()
                 option_dic['alpn'] = [bytearray(b'http/1.1')]
                 option_dic['settings'] = hs_settings
                 option_dic['reqCert'] = True
                 option_dic['sni'] = None
             else:
-                logger.error('Helper.hssrv_options_get(): incomplete ClientAuth configuration in config file')
+                logger.error('Helper.hssrv_options_get(): incomplete Daemon configuration in config file')
         else:
-            logger.error('Helper.hssrv_options_get(): ClientAuth specified but not configured in config file')
+            logger.error('Helper.hssrv_options_get(): Daemon specified but not configured in config file')
 
     return option_dic
 

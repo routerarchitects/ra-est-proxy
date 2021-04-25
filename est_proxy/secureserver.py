@@ -36,34 +36,39 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
 
         self.logger = logger_setup(self.debug, cfg_file=self.cfg_file)
 
-        if 'ClientAuth' in config_dic:
-            self.config_dic['ClientAuth'] = {}
-            if 'key_file' in config_dic['ClientAuth']:
+        if 'Daemon' in config_dic:
+            self.config_dic['Daemon'] = {}
+            if 'key_file' in config_dic['Daemon']:
                 try:
                     # load key
-                    key_file = open(config_dic.get('ClientAuth', 'key_file', fallback=None), 'rb').read()
+                    key_file = open(config_dic.get('Daemon', 'key_file', fallback=None), 'rb').read()
                     key_file = str(key_file, 'utf-8')
-                    self.config_dic['ClientAuth']['key_file'] = parsePEMKey(key_file, private=True, implementations=["python"])
+                    self.config_dic['Daemon']['key_file'] = parsePEMKey(key_file, private=True, implementations=["python"])
                 except BaseException as err_:
-                    self.logger.error('Secureserver._load_config() key_file {0} could not be loaded.'.format(config_dic['ClientAuth']['key_file']))
+                    self.logger.error('Secureserver._load_config() key_file {0} could not be loaded.'.format(config_dic['Daemon']['key_file']))
             else:
-                self.logger.error('Secureserver._load_config() ClientAuth configured but no key_file specified.')
+                self.logger.error('Secureserver._load_config() Daemon configured but no key_file specified.')
 
-            if 'cert_file' in config_dic['ClientAuth']:
+            if 'cert_file' in config_dic['Daemon']:
                 # load cert
-                cert_file = open(config_dic.get('ClientAuth', 'cert_file', fallback=None), 'rb').read()
+                cert_file = open(config_dic.get('Daemon', 'cert_file', fallback=None), 'rb').read()
                 cert_file = str(cert_file, 'utf-8')
                 cert_chain = X509CertChain()
                 cert_chain.parsePemList(cert_file)
-                self.config_dic['ClientAuth']['cert_file'] = cert_chain
+                self.config_dic['Daemon']['cert_file'] = cert_chain
             else:
-                self.logger.error('Secureserver._load_config() ClientAuth configured but no cert_file specified.')
+                self.logger.error('Secureserver._load_config() Daemon configured but no cert_file specified.')
 
+        if 'SRP' in config_dic:
+            self.config_dic['SRP'] = {}
+            if 'database' in config_dic['SRP']:
+                self.config_dic['SRP']['database'] = config_dic['SRP']['database']
+        
     def handshake(self, connection):
         # pylint: disable=W0221
         self.logger.debug('SecureServer.handshake()')
 
-        hs_options = hssrv_options_get(self.logger, 'ClientAuth', self.config_dic)
+        hs_options = hssrv_options_get(self.logger, 'Daemon', self.config_dic)
         request_pha = True
         require_pha = True
 
@@ -114,5 +119,5 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
 
         connection.ignoreAbruptClose = True
         # print(connection.session.clientCertChain)
-        # print(connection.session.serverCertChain)        
+        # print(connection.session.serverCertChain)
         return True
