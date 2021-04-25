@@ -111,8 +111,8 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
                 return False
         except TLSError as _err:
             self.logger.error('TLSError: %s', _err)
-
-        connection.ignoreAbruptClose = True
+            return False
+        connection.ignoreAbruptClose = False
         # print(connection.session.clientCertChain)
-        # print(connection.session.serverCertChain)        
+        # print(connection.session.serverCertChain)
         return True

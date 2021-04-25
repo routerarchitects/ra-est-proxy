@@ -277,9 +277,6 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         # check if connection is poperly authenticated
         connection_authenticated = self._auth_check()
 
-        #data = "\n".join(data.decode('utf-8').splitlines()).encode()
-        #print(data)
-
         if connection_authenticated:
             if data and (self.path == '/.well-known/est/simpleenroll' or self.path == '/.well-known/est/simplereenroll'):
                 # enroll certificate
