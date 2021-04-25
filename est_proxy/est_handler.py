@@ -277,9 +277,6 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         # check if connection is poperly authenticated
         connection_authenticated = self._auth_check()
 
-        #data = "\n".join(data.decode('utf-8').splitlines()).encode()
-        #print(data)
-
         if connection_authenticated:
             if data and (self.path == '/.well-known/est/simpleenroll' or self.path == '/.well-known/est/simplereenroll'):
                 # enroll certificate
@@ -293,7 +290,10 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
                     code = 500
             else:
                 code = 400
-                content = 'An unknown error has occured.\n'
+                if data:
+                    content = 'An unknown error has occured.\n'
+                else:
+                    content = 'No data had been send.\n'
         else:
             code = 401
             content = 'The server was unable to authorize the request.\n'
@@ -322,8 +322,12 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         if "Content-Length" in self.headers:
             #  gets the size of data
             content_length = int(self.headers['Content-Length'])
-            # gets the data itself
-            post_data = self.rfile.read(content_length)
+            if content_length > 0:
+                # gets the data itself
+                post_data = self.rfile.read(content_length)
+            else:
+                post_data = None
+
         elif "chunked" in self.headers.get("Transfer-Encoding", ""):
             self.logger.debug('ESTSrvHandler.do_POST() chunk encoding detected...')
             post_data = b''

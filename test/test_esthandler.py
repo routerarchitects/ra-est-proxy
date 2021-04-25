@@ -451,14 +451,14 @@ foo
         """ _post_process() - enroll but no data """
         self.esthandler.path = '/.well-known/est/simpleenroll'
         mock_auth.return_value = True
-        self.assertEqual((400, None, 30, None, b'An unknown error has occured.\n'), self.esthandler._post_process(None))
+        self.assertEqual((400, None, 23, None, b'No data had been send.\n'), self.esthandler._post_process(None))
 
     @patch('est_proxy.est_handler.ESTSrvHandler._auth_check')
     def test_048__post_process(self, mock_auth):
-        """ _post_process() - enroll but no data """
-        self.esthandler.path = '/.well-known/est/simplereenroll'
+        """ _post_process() - enroll but data to a wrong url """
+        self.esthandler.path = '/foobadoo'
         mock_auth.return_value = True
-        self.assertEqual((400, None, 30, None, b'An unknown error has occured.\n'), self.esthandler._post_process(None))
+        self.assertEqual((400, None, 30, None, b'An unknown error has occured.\n'), self.esthandler._post_process('data'))
 
     @patch('est_proxy.est_handler.ESTSrvHandler._auth_check')
     @patch('est_proxy.est_handler.ESTSrvHandler._cert_enroll')
