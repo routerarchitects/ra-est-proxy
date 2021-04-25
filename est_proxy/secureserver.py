@@ -61,14 +61,14 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
 
         if 'SRP' in config_dic:
             self.config_dic['SRP'] = {}
-            if 'database' in config_dic['SRP']:
-                self.config_dic['SRP']['database'] = config_dic['SRP']['database']
-        
+            if 'userdb' in config_dic['SRP']:
+                self.config_dic['SRP']['userdb'] = config_dic['SRP']['userdb']
+
     def handshake(self, connection):
         # pylint: disable=W0221
         self.logger.debug('SecureServer.handshake()')
 
-        hs_options = hssrv_options_get(self.logger, 'Daemon', self.config_dic)
+        hs_options = hssrv_options_get(self.logger, self.config_dic)
         request_pha = True
         require_pha = True
 

@@ -11,7 +11,7 @@ import base64
 import textwrap
 import OpenSSL
 import pytz
-from tlslite import SessionCache, HandshakeSettings
+from tlslite import SessionCache, HandshakeSettings, VerifierDB
 from tlslite.constants import CipherSuite, HashAlgorithm, SignatureAlgorithm, GroupName, SignatureScheme
 
 def b64decode_pad(logger, string):
@@ -199,9 +199,9 @@ def logger_setup(debug, cfg_file=None):
     logger = logging.getLogger('est_proxy')
     return logger
 
-def hssrv_options_get(logger, task, config_dic):
+def hssrv_options_get(logger, config_dic):
     """ get parameters for handshake server """
-    logger.debug('hssrv_options_get({0})'.format(task))
+    logger.debug('hssrv_options_get()')
 
     hs_settings = HandshakeSettings()
 
@@ -215,22 +215,27 @@ def hssrv_options_get(logger, task, config_dic):
     #                            for item in cipher.split(',')]
 
     option_dic = {}
-    if task == 'Daemon':
-        if 'Daemon' in config_dic:
-            if 'cert_file' in config_dic['Daemon'] and 'key_file' in config_dic['Daemon']:
-                # logger.error('Helper.hssrv_options_get(): Daemon specified but not configured in config file')
-                option_dic['certChain'] = config_dic['Daemon']['cert_file']
-                option_dic['privateKey'] = config_dic['Daemon']['key_file']
-                option_dic['sessionCache'] = SessionCache()
-                option_dic['alpn'] = [bytearray(b'http/1.1')]
-                option_dic['settings'] = hs_settings
-                option_dic['reqCert'] = True
-                option_dic['sni'] = None
-            else:
-                logger.error('Helper.hssrv_options_get(): incomplete Daemon configuration in config file')
+    if 'Daemon' in config_dic:
+        if 'cert_file' in config_dic['Daemon'] and 'key_file' in config_dic['Daemon']:
+            option_dic['certChain'] = config_dic['Daemon']['cert_file']
+            option_dic['privateKey'] = config_dic['Daemon']['key_file']
+            option_dic['sessionCache'] = SessionCache()
+            option_dic['alpn'] = [bytearray(b'http/1.1')]
+            option_dic['settings'] = hs_settings
+            option_dic['reqCert'] = True
+            option_dic['sni'] = None
         else:
-            logger.error('Helper.hssrv_options_get(): Daemon specified but not configured in config file')
+            logger.error('Helper.hssrv_options_get(): incomplete Daemon configuration in config file')
+    else:
+        logger.error('Helper.hssrv_options_get(): Daemon specified but not configured in config file')
 
+    if 'SRP' in config_dic:
+        if 'userdb' in config_dic['SRP']:
+            srp_db = VerifierDB(config_dic['SRP']['userdb'])
+            srp_db.open()
+            option_dic['verifierDB'] = srp_db
+
+    logger.debug('hssrv_options_get() ended')
     return option_dic
 
 def uts_now():
