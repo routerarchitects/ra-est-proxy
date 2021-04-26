@@ -1,6 +1,6 @@
 <!-- markdownlint-disable  MD013 -->
 <!-- wiki-title Example commands for est clients -->
-# Example commends of EST clients used for testing
+# Example commands of EST clients used for testing
 
 The below commands are tailored for my environment and need to be modified.
 
