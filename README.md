@@ -64,7 +64,7 @@ to let me know.
 
 The fastest and most convenient way to install `est_proxy` is to use docker containers.  There are ready made images available at [dockerhub](https://hub.docker.com/r/grindsa/est_proxy) and [ghcr.io](https://github.com/grindsa?tab=packages&ecosystem=container) as well as [instructions to build your own container](examples/Docker/).
 
-A manual installation procedure will be added at a later stage of the project
+A manual installation procedure will be added at a later stage of the project.
 
 ## Contributing
 
