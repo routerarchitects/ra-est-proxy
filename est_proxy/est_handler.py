@@ -6,7 +6,7 @@ import subprocess
 import importlib
 from http.server import BaseHTTPRequestHandler
 # pylint: disable=E0401
-from est_proxy.helper import config_load, ca_handler_get, logger_setup
+from est_proxy.helper import config_load, ca_handler_get, logger_setup # ,b64_encode, cert_san_get, cert_extensions_get, cert_eku_get
 from est_proxy.version import __version__
 
 class ESTSrvHandler(BaseHTTPRequestHandler):
@@ -65,6 +65,12 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         self.logger.debug('ESTSrvHandler._auth_check()')
         authenticated = False
         if self.connection.session.clientCertChain or self.connection.session.srpUsername:
+            if self.connection.session.clientCertChain:
+                self.logger.info('Client X.509 SHA1 fingerprint: {0}'.format(self.connection.session.clientCertChain.getFingerprint()))
+                # cert_bin = b64_encode(self.logger, self.connection.session.clientCertChain.__dict__['x509List'][0].writeBytes())
+                # serial = cert_eku_get(self.logger, cert_bin)
+            else:
+                self.logger.info('Client SRP username: {0}'.format(self.connection.session.srpUsername))
             authenticated = True
         self.logger.debug('ESTSrvHandler._auth_check() ended with: {0}'.format(authenticated))
         return authenticated

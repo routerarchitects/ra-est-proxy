@@ -76,6 +76,65 @@ def cert_pem2der(pem_file):
     certobj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, pem_file)
     return OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_ASN1, certobj)
 
+def cert_san_get(logger, certificate, recode=True):
+    """ get subject alternate names from certificate """
+    logger.debug('cert_san_get()')
+    if recode:
+        pem_file = build_pem_file(logger, None, b64_url_recode(logger, certificate), True)
+    else:
+        pem_file = certificate
+
+    cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, pem_file)
+    san = []
+    ext_count = cert.get_extension_count()
+    for i in range(0, ext_count):
+        ext = cert.get_extension(i)
+        if 'subjectAltName' in str(ext.get_short_name()):
+            san_list = ext.__str__().split(',')
+            for san_name in san_list:
+                san_name = san_name.rstrip()
+                san_name = san_name.lstrip()
+                san.append(san_name)
+    logger.debug('cert_san_get() ended')
+    return san
+
+def cert_eku_get(logger, certificate, recode=True):
+    """ get extended key usage from certificate """
+    logger.debug('cert_eku_get()')
+    if recode:
+        pem_file = build_pem_file(logger, None, b64_url_recode(logger, certificate), True)
+    else:
+        pem_file = certificate
+
+    cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, pem_file)
+    eku = None
+    ext_count = cert.get_extension_count()
+    for i in range(0, ext_count):
+        ext = cert.get_extension(i)
+        print(str(ext.get_short_name()))
+        if 'extendedKeyUsage' in str(ext.get_short_name()):
+            eku = cert.get_extension(i).get_data()
+    logger.debug('cert_eku_get() ended')
+    return eku
+
+def cert_extensions_get(logger, certificate, recode=True):
+    """ get extenstions from certificate certificate """
+    logger.debug('cert_extensions_get()')
+    if recode:
+        pem_file = build_pem_file(logger, None, b64_url_recode(logger, certificate), True)
+    else:
+        pem_file = certificate
+
+    cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, pem_file)
+    extension_list = []
+    ext_count = cert.get_extension_count()
+    for i in range(0, ext_count):
+        ext = cert.get_extension(i)
+        extension_list.append(convert_byte_to_string(base64.b64encode(ext.get_data())))
+
+    logger.debug('cert_extensions_get() ended with: {0}'.format(extension_list))
+    return extension_list
+
 def cert_serial_get(logger, certificate):
     """ get serial number form certificate """
     logger.debug('cert_serial_get()')

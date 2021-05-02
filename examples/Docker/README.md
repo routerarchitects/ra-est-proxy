@@ -54,7 +54,7 @@ connection_log: False
 [LOGGING]
 log_format: '%(asctime)s - est_proxy - %(levelname)s - %(message)s'
 
-[ClientAuth]
+[Daemon]
 address = 0.0.0.0
 port = 17443
 key_file = /usr/local/est_proxy/data/certs/est-srv.key.pem
