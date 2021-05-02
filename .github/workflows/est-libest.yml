@@ -58,7 +58,7 @@ jobs:
         sudo openssl x509 -outform der -in /tmp/certs/cert-0-0.pem  -out /tmp/certs/cert-0-1.der
 
     - name: "[ PREPARE ] reconfigure est_proxy and enable SRP"
-      run: |    
+      run: |
         sudo cat .github/wf_data/est_proxy_srp.cfg >> examples/Docker/data/est_proxy.cfg
         cd examples/Docker/
         docker-compose restart
