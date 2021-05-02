@@ -8,7 +8,7 @@ on:
     - cron:  '0 2 * * 6'
 
 jobs:
-  est_proto_libest:
+  est_proto_globalsign:
     name: "est_proto_gsign"
     runs-on: ubuntu-latest
     steps:
