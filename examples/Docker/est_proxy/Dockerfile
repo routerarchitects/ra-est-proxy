@@ -7,18 +7,22 @@ RUN apt-get install --no-install-recommends -y \
     python3-pip \
     curl \
     openssl \
+    patch \
  && rm -rf /var/lib/apt/lists/*
 
 # install python requirements
 COPY requirements.txt /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt
 
+# patch tlslite
+COPY examples/Docker/est_proxy/tlslite-01.patch /tmp/tlslite-01.patch
+RUN patch /usr/local/lib/python3.8/dist-packages/tlslite/tlsconnection.py /tmp/tlslite-01.patch
 
-# create folders for acme2certifier
+# create folders for est_proxy
 RUN mkdir -p /usr/local/est_proxy/etc && \
     mkdir -p /usr/local/est_proxy/examples && \
     mkdir -p /usr/local/est_proxy/bin
-    
+
 COPY est_proxy/ /usr/local/est_proxy/est_proxy
 COPY examples/ca_handler/ /usr/local/est_proxy/examples/ca_handler
 COPY examples/est_proxy.cfg /usr/local/est_proxy/examples/
