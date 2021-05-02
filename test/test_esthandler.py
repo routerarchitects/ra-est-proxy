@@ -547,10 +547,13 @@ foo
         """ _auth_check() clientauth """
         obj = Mock()
         obj.session = Mock()
-        obj.session.clientCertChain = 'clientCertChain'
+        obj.session.clientCertChain = Mock()
+        obj.session.clientCertChain.getFingerprint = Mock(return_value='clientCertChain')
         obj.session.srpUsername = None
         self.esthandler.connection = obj
-        self.assertTrue(self.esthandler._auth_check())
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertTrue(self.esthandler._auth_check())
+        self.assertIn('INFO:test_est:Client X.509 SHA1 fingerprint: clientCertChain', lcm.output)
 
     def test_059__auth_check(self):
         """ _auth_check() clientauth """
@@ -559,16 +562,21 @@ foo
         obj.session.clientCertChain = None
         obj.session.srpUsername = 'srpUsername'
         self.esthandler.connection = obj
-        self.assertTrue(self.esthandler._auth_check())
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertTrue(self.esthandler._auth_check())
+        self.assertIn('INFO:test_est:Client SRP username: srpUsername', lcm.output)
 
     def test_060__auth_check(self):
         """ _auth_check() clientauth """
         obj = Mock()
         obj.session = Mock()
-        obj.session.clientCertChain = 'clientCertChain'
+        obj.session.clientCertChain = Mock()
+        obj.session.clientCertChain.getFingerprint = Mock(return_value='clientCertChain')
         obj.session.srpUsername = 'srpUsername'
         self.esthandler.connection = obj
-        self.assertTrue(self.esthandler._auth_check())
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertTrue(self.esthandler._auth_check())
+        self.assertIn('INFO:test_est:Client X.509 SHA1 fingerprint: clientCertChain', lcm.output)
 
 if __name__ == '__main__':
     unittest.main()
