@@ -4,6 +4,9 @@
 ![GitHub release](https://img.shields.io/github/release/grindsa/est_proxy.svg)
 ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/grindsa/est_proxy/main.svg?label=last%20commit%20into%20master)
 ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/grindsa/est_proxy/devel.svg?label=last%20commit%20into%20devel)
+
+[![codecov](https://codecov.io/gh/grindsa/est_proxy/branch/devel/graph/badge.svg)](https://codecov.io/gh/grindsa/est_proxy)
+
 <!-- [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/2581/badge)](https://bestpractices.coreinfrastructure.org/projects/2581) -->
 
 est_proxy is development project to create an est protocol proxy. Main
