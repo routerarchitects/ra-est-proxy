@@ -8,7 +8,6 @@
 ![Codecov main](https://img.shields.io/codecov/c/gh/grindsa/est_proxy/branch/main?label=test%20coverage%20main)
 ![Codecov devel](https://img.shields.io/codecov/c/gh/grindsa/est_proxy/branch/devel?label=test%20coverage%20devel)
 
-
 est_proxy is development project to create an est protocol proxy. Main
 intention is to provide est enrollment services on CA servers which do not support this
 protocol. It consists of two libraries:
