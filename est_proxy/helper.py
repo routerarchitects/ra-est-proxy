@@ -111,7 +111,6 @@ def cert_eku_get(logger, certificate, recode=True):
     ext_count = cert.get_extension_count()
     for i in range(0, ext_count):
         ext = cert.get_extension(i)
-        print(str(ext.get_short_name()))
         if 'extendedKeyUsage' in str(ext.get_short_name()):
             eku = cert.get_extension(i).get_data()
     logger.debug('cert_eku_get() ended')
@@ -290,9 +289,12 @@ def hssrv_options_get(logger, config_dic):
 
     if 'SRP' in config_dic:
         if 'userdb' in config_dic['SRP']:
-            srp_db = VerifierDB(config_dic['SRP']['userdb'])
-            srp_db.open()
-            option_dic['verifierDB'] = srp_db
+            try:
+                srp_db = VerifierDB(config_dic['SRP']['userdb'])
+                srp_db.open()
+                option_dic['verifierDB'] = srp_db
+            except BaseException as err_:
+                logger.error('Helper.hssrv_options_get(): SRP database {0} could not get loaded. Error: {1}'.format(config_dic['SRP']['userdb'], err_))
 
     logger.debug('hssrv_options_get() ended')
     return option_dic
