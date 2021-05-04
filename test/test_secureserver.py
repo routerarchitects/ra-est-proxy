@@ -7,6 +7,7 @@ import configparser
 import sys
 import os
 from unittest.mock import patch, Mock, mock_open
+import warnings
 
 sys.path.insert(0, '.')
 sys.path.insert(1, '..')
@@ -21,6 +22,9 @@ class SecureserverTestCases(unittest.TestCase):
         self.logger = logging.getLogger('test_est')
         from est_proxy.secureserver import SecureServer
         self.secureserver = SecureServer.__new__(SecureServer)
+
+    #def tearDown(self):
+    #    warnings.simplefilter("default", ResourceWarning)
 
     @patch('est_proxy.secureserver.config_load')
     @patch('est_proxy.secureserver.logger_setup')
@@ -220,6 +224,20 @@ fmAA52ygKHBzUr9V33CkW0FhvjqkAUya5x9CqWlHoal0RVvFavnw+4ImqbE=
         self.secureserver._config_load()
         self.assertEqual({'userdb': 'foo'}, self.secureserver.config_dic['SRP'])
 
+    def test_014_init(self):
+        """ test init """
+        warnings.simplefilter("ignore", ResourceWarning)
+        server_address = ('127.0.0.1', 1234)
+        handler_class = 'handlerclass'
+        self.secureserver.__init__(server_address, handler_class, cfg_file='cfg_file')
+        self.assertEqual('cfg_file', self.secureserver.cfg_file)
+
+    def test_015_handshake(self):
+        """ test handshake """
+        connection = Mock()
+        connection.request_post_handshake_auth = Mock(return_value=['foo', 'bar'])
+        self.secureserver.logger = self.logger
+        self.assertTrue(self.secureserver.handshake(connection))
 
 if __name__ == '__main__':
     unittest.main()
