@@ -5,7 +5,7 @@ import struct
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer
 from tlslite.api import TLSSocketServerMixIn, parsePEMKey, X509CertChain, TLSLocalAlert, TLSRemoteAlert, TLSError, AlertDescription
-from tlslite.utils.compat import b2a_hex, a2b_hex
+# from tlslite.utils.compat import b2a_hex, a2b_hex
 # pylint: disable=E0401
 from est_proxy.helper import config_load, logger_setup, hssrv_options_get, connection_log, uts_now
 
@@ -44,18 +44,21 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
                     key_file = open(config_dic.get('Daemon', 'key_file', fallback=None), 'rb').read()
                     key_file = str(key_file, 'utf-8')
                     self.config_dic['Daemon']['key_file'] = parsePEMKey(key_file, private=True, implementations=["python"])
-                except BaseException as err_:
+                except BaseException:
                     self.logger.error('Secureserver._load_config() key_file {0} could not be loaded.'.format(config_dic['Daemon']['key_file']))
             else:
                 self.logger.error('Secureserver._load_config() Daemon configured but no key_file specified.')
 
             if 'cert_file' in config_dic['Daemon']:
                 # load cert
-                cert_file = open(config_dic.get('Daemon', 'cert_file', fallback=None), 'rb').read()
-                cert_file = str(cert_file, 'utf-8')
-                cert_chain = X509CertChain()
-                cert_chain.parsePemList(cert_file)
-                self.config_dic['Daemon']['cert_file'] = cert_chain
+                try:
+                    cert_file = open(config_dic.get('Daemon', 'cert_file', fallback=None), 'rb').read()
+                    cert_file = str(cert_file, 'utf-8')
+                    cert_chain = X509CertChain()
+                    cert_chain.parsePemList(cert_file)
+                    self.config_dic['Daemon']['cert_file'] = cert_chain
+                except BaseException:
+                    self.logger.error('Secureserver._load_config() cert_file {0} could not be loaded.'.format(config_dic['Daemon']['cert_file']))
             else:
                 self.logger.error('Secureserver._load_config() Daemon configured but no cert_file specified.')
 
