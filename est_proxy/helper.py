@@ -293,9 +293,9 @@ def hssrv_options_get(logger, config_dic):
                 srp_db = VerifierDB(config_dic['SRP']['userdb'])
                 srp_db.open()
                 option_dic['verifierDB'] = srp_db
-            except BaseException as err_:
-                logger.error('Helper.hssrv_options_get(): SRP database {0} could not get loaded. Error: {1}'.format(config_dic['SRP']['userdb'], err_))
-
+            except BaseException as err:
+                logger.error('Helper.hssrv_options_get(): SRP database {0} could not get loaded.'.format(config_dic['SRP']['userdb']))
+                logger.error('Helper.hssrv_options_get(): Error: {0}'.format(err))
     logger.debug('hssrv_options_get() ended')
     return option_dic
 

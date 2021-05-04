@@ -3,6 +3,7 @@
 """ unittests for helper """
 # pylint: disable=C0302, C0415, E0401, R0902, R0904, R0913, R0914, R0915, W0212
 import unittest
+import configparser
 import sys
 from unittest.mock import patch, MagicMock, Mock
 
@@ -94,7 +95,7 @@ class HelperTestCases(unittest.TestCase):
         foo_ = {'reqCert': True, 'sni': None, 'privateKey': 'key_file', 'certChain': 'cert_file', 'alpn': [bytearray(b'http/1.1')]}
         with self.assertLogs('test_est', level='INFO') as lcm:
             self.assertTrue(foo_.items() <= self.hssrv_options_get(self.logger, config_dic).items())
-        error_message = "ERROR:test_est:Helper.hssrv_options_get(): SRP database foo.db could not get loaded. Error: db file doesn't exist; use 'c' or 'n' flag to create a new db"
+        error_message = "ERROR:test_est:Helper.hssrv_options_get(): SRP database foo.db could not get loaded."
         self.assertIn(error_message, lcm.output)
 
     def test_007_helper_b64_decode(self):
@@ -539,6 +540,35 @@ klGUNHG98CtsmlhrivhSTJWqSIOfyKGF
         debug = False
         cfg_file = 'cfg_file'
         self.assertTrue(self.logger_setup(debug, cfg_file))
+
+    @patch('tlslite.constants.CipherSuite.ietfNames')
+    def test_063__connection_log(self, mockcs):
+        """ stupid connection logger """
+        seconds = 10
+        mockcs.return_value = 'foo'
+        msession = Mock()
+        msession.cipherSuite = Mock(return_value='cipherSuite')
+        connection = Mock()
+        connection.getpeername = Mock(return_value='getpeername')
+        connection.getVersionName = Mock(return_value='getVersionName')
+        connection.getCipherName = Mock(return_value='getCipherName')
+        connection.getCipherImplementation = Mock(return_value='getCipherImplementation')
+        connection.version = (2, 1)
+        connection.dhGroupSize = 'dhGroupSize'
+        connection.next_proto = 'next_proto'
+        connection.encryptThenMAC = 'encryptThenMAC'
+        connection.extendedMasterSecret = 'extendedMasterSecret'
+        connection.session = Mock(return_value=msession)
+        with self.assertLogs('test_est', level='DEBUG') as lcm:
+            self.connection_log(self.logger, connection, seconds)
+        self.assertIn('DEBUG:test_est:Remote end: getpeername', lcm.output)
+        self.assertIn('DEBUG:test_est: Handshake time: 10.000 seconds', lcm.output)
+        self.assertIn('DEBUG:test_est: Version: getVersionName', lcm.output)
+        self.assertIn('DEBUG:test_est: Cipher: getCipherName getCipherImplementation', lcm.output)
+        self.assertIn('DEBUG:test_est: DH group size: dhGroupSize bits', lcm.output)
+        self.assertIn('DEBUG:test_est: Next-Protocol Negotiated: next_proto', lcm.output)
+        self.assertIn('DEBUG:test_est: Encrypt-then-MAC: encryptThenMAC', lcm.output)
+        self.assertIn('DEBUG:test_est: Extended Master Secret: extendedMasterSecret', lcm.output)
 
 if __name__ == '__main__':
     unittest.main()
