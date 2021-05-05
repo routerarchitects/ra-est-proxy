@@ -298,7 +298,7 @@ fmAA52ygKHBzUr9V33CkW0FhvjqkAUya5x9CqWlHoal0RVvFavnw+4ImqbE=
 
     @patch('est_proxy.secureserver.connection_log')
     def test_020_handshake(self, mock_log):
-        """ test handshake TLSLocalAlert handshake_failure """
+        """ test handshake TLSLocalAlert other failure """
         alert = Mock()
         alert.description = 'other failure'
 

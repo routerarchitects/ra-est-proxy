@@ -112,7 +112,7 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
             else:
                 self.logger.error('TLSLocalAlert: %s', _err)
                 try:
-                    self.logger.error('TLSLocalAlert: %s', _err.message)
+                    self.logger.error('TLSLocalAlert message: %s', _err.message)
                 except BaseException:
                     pass
         except TLSError as _err:
