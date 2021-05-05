@@ -8,9 +8,15 @@ import sys
 import os
 from unittest.mock import patch, Mock, mock_open
 import warnings
+import logging
+import tlslite
 
 sys.path.insert(0, '.')
 sys.path.insert(1, '..')
+
+def fake_log(logger, text):
+    """ fake funktion just sending a text log """
+    logger.error(text)
 
 class SecureserverTestCases(unittest.TestCase):
     """ test class for cgi_handler """
@@ -238,6 +244,119 @@ fmAA52ygKHBzUr9V33CkW0FhvjqkAUya5x9CqWlHoal0RVvFavnw+4ImqbE=
         connection.request_post_handshake_auth = Mock(return_value=['foo', 'bar'])
         self.secureserver.logger = self.logger
         self.assertTrue(self.secureserver.handshake(connection))
+
+    def test_016_handshake(self):
+        """ test handshake """
+        connection = Mock()
+        connection.request_post_handshake_auth = 'bsbas'
+        self.secureserver.logger = self.logger
+
+        with self.assertLogs('test_est', level='DEBUG') as lcm:
+            self.assertTrue(self.secureserver.handshake(connection))
+        self.assertIn("DEBUG:test_est:'str' object is not callable", lcm.output)
+
+    @patch('est_proxy.secureserver.connection_log')
+    def test_017_handshake(self, mock_log):
+        """ test handshake """
+        connection = Mock()
+        connection.request_post_handshake_auth = Mock(return_value=['foo', 'bar'])
+        self.secureserver.logger = self.logger
+        self.secureserver.config_dic = {'connection_log': True}
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            mock_log = Mock(return_value=fake_log(self.logger, 'test_017_handshake'))
+            self.assertTrue(self.secureserver.handshake(connection))
+        self.assertIn('ERROR:test_est:test_017_handshake', lcm.output)
+
+    @patch('est_proxy.secureserver.connection_log')
+    def test_018_handshake(self, mock_log):
+        """ test handshake unknown exception """
+        connection = Mock()
+        connection.request_post_handshake_auth = Mock(return_value=['foo', 'bar'])
+        connection.handshakeServer.side_effect = Exception('unkn')
+        self.secureserver.logger = self.logger
+        self.secureserver.config_dic = {'connection_log': True}
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            mock_log = Mock(return_value=fake_log(self.logger, 'test_017_handshake'))
+            self.assertFalse(self.secureserver.handshake(connection))
+        self.assertIn('ERROR:test_est:Error: unkn', lcm.output)
+
+    @patch('est_proxy.secureserver.connection_log')
+    def test_019_handshake(self, mock_log):
+        """ test handshake TLSLocalAlert handshake_failure """
+        alert = Mock()
+        alert.description = tlslite.constants.AlertDescription.handshake_failure
+
+        connection = Mock()
+        connection.request_post_handshake_auth = Mock(return_value=['foo', 'bar'])
+        connection.handshakeServer.side_effect = tlslite.errors.TLSLocalAlert(alert)
+        self.secureserver.logger = self.logger
+        self.secureserver.config_dic = {'connection_log': True}
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            mock_log = Mock(return_value=fake_log(self.logger, 'test_017_handshake'))
+            self.assertFalse(self.secureserver.handshake(connection))
+        self.assertIn('ERROR:test_est:TLSLocalAlert: Unable to negotiate mutually acceptable parameters', lcm.output)
+
+    @patch('est_proxy.secureserver.connection_log')
+    def test_020_handshake(self, mock_log):
+        """ test handshake TLSLocalAlert handshake_failure """
+        alert = Mock()
+        alert.description = 'other failure'
+
+        connection = Mock()
+        connection.request_post_handshake_auth = Mock(return_value=['foo', 'bar'])
+        connection.handshakeServer.side_effect = tlslite.errors.TLSLocalAlert(alert)
+        self.secureserver.logger = self.logger
+        self.secureserver.config_dic = {'connection_log': True}
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            mock_log = Mock(return_value=fake_log(self.logger, 'test_017_handshake'))
+            self.assertFalse(self.secureserver.handshake(connection))
+        self.assertIn('ERROR:test_est:TLSLocalAlert: other failure', lcm.output)
+
+    @patch('est_proxy.secureserver.connection_log')
+    def test_021_handshake(self, mock_log):
+        """ test handshake TLSRemoteAlert user canceled """
+        alert = Mock()
+        alert.description = tlslite.constants.AlertDescription.user_canceled
+
+        connection = Mock()
+        connection.request_post_handshake_auth = Mock(return_value=['foo', 'bar'])
+        connection.handshakeServer.side_effect = tlslite.errors.TLSRemoteAlert(alert)
+        self.secureserver.logger = self.logger
+        self.secureserver.config_dic = {'connection_log': True}
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            mock_log = Mock(return_value=fake_log(self.logger, 'test_017_handshake'))
+            self.assertFalse(self.secureserver.handshake(connection))
+        self.assertIn('ERROR:test_est:TLSRemoteAlert: user_canceled', lcm.output)
+
+    @patch('est_proxy.secureserver.connection_log')
+    def test_022_handshake(self, mock_log):
+        """ test handshake TLSRemoteAlert opther message """
+        alert = Mock()
+        alert.description = tlslite.constants.AlertDescription.handshake_failure
+
+        connection = Mock()
+        connection.request_post_handshake_auth = Mock(return_value=['foo', 'bar'])
+        connection.handshakeServer.side_effect = tlslite.errors.TLSRemoteAlert(alert)
+        self.secureserver.logger = self.logger
+        self.secureserver.config_dic = {'connection_log': True}
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            mock_log = Mock(return_value=fake_log(self.logger, 'test_017_handshake'))
+            self.assertFalse(self.secureserver.handshake(connection))
+        self.assertIn('ERROR:test_est:TLSRemoteAlert: handshake_failure', lcm.output)
+
+    @patch('est_proxy.secureserver.connection_log')
+    def test_023_handshake(self, mock_log):
+        """ test handshake TLSError opther message """
+
+        connection = Mock()
+        connection.request_post_handshake_auth = Mock(return_value=['foo', 'bar'])
+        connection.handshakeServer.side_effect = tlslite.errors.TLSError()
+        self.secureserver.logger = self.logger
+        self.secureserver.config_dic = {'connection_log': True}
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            mock_log = Mock(return_value=fake_log(self.logger, 'test_017_handshake'))
+            self.assertFalse(self.secureserver.handshake(connection))
+        self.assertIn("ERROR:test_est:TLSError: TLSError()", lcm.output)
 
 if __name__ == '__main__':
     unittest.main()

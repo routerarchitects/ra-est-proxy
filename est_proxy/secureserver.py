@@ -75,6 +75,7 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
         request_pha = True
         require_pha = True
 
+        result = False
         try:
             start = uts_now()
             connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -85,42 +86,42 @@ class SecureServer(ThreadingMixIn, TLSSocketServerMixIn, HTTPServer):
                 if request_pha:
                     for _ele in connection.request_post_handshake_auth():
                         pass
-            except ValueError as err_:
+            except BaseException as err_:
                 # if we can't do PHA, we can't do it
                 self.logger.debug(err_)
             stop = uts_now()
 
             if 'connection_log' in self.config_dic and self.config_dic['connection_log']:
                 connection_log(self.logger, connection, stop-start)
+            result = True
 
         except TLSRemoteAlert as _err:
             # pylint: disable=R1705
             if _err.description == AlertDescription.user_canceled:
                 self.logger.error('TLSRemoteAlert: user_canceled')
-                return False
             else:
                 self.logger.error('TLSRemoteAlert: %s', _err)
                 try:
                     self.logger.error('TLSRemoteAlert: %s', _err.message)
                 except BaseException:
                     pass
-                return False
         except TLSLocalAlert as _err:
             # pylint: disable=R1705
             if _err.description == AlertDescription.handshake_failure:
                 self.logger.error('TLSLocalAlert: Unable to negotiate mutually acceptable parameters')
-                return False
             else:
                 self.logger.error('TLSLocalAlert: %s', _err)
                 try:
                     self.logger.error('TLSLocalAlert: %s', _err.message)
                 except BaseException:
                     pass
-                return False
         except TLSError as _err:
             self.logger.error('TLSError: %s', _err)
-            return False
+        except BaseException as _err:
+            self.logger.error('Error: %s', _err)
+
         connection.ignoreAbruptClose = False
         # print(connection.session.clientCertChain)
         # print(connection.session.serverCertChain)
-        return True
+
+        return result
