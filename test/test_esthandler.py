@@ -657,6 +657,47 @@ foo
         self.esthandler.__init__()
         self.assertEqual('est_proxy.cfg', self.esthandler.cfg_file)
 
+    @patch('est_proxy.est_handler.ESTSrvHandler._post_process')
+    def test_069_do_post(self, mock_process):
+        """ test do get """
+        mock_process.return_value = ['code', 'content_type', 'content_length', 'encoding', 'content']
+        self.esthandler.client_address = ('127.0.0.1', 8080)
+        self.esthandler.path = '/'
+        self.esthandler.requestline = 'requestline'
+        self.esthandler.request_version = 'HTTP/0.9'
+        self.esthandler.rfile = Mock()
+        self.esthandler.wfile = Mock()
+        self.esthandler.headers = {'Content-Length': 15}
+        self.assertFalse(self.esthandler.do_POST())
+
+    @patch('est_proxy.est_handler.ESTSrvHandler._post_process')
+    def test_070_do_post(self, mock_process):
+        """ test do get """
+        mock_process.return_value = ['code', 'content_type', 'content_length', 'encoding', 'content']
+        self.esthandler.client_address = ('127.0.0.1', 8080)
+        self.esthandler.path = '/'
+        self.esthandler.requestline = 'requestline'
+        self.esthandler.request_version = 'HTTP/0.9'
+        self.esthandler.rfile = Mock()
+        self.esthandler.wfile = Mock()
+        self.esthandler.headers = {'Content-Length': 0}
+        self.assertFalse(self.esthandler.do_POST())
+
+    @patch('est_proxy.est_handler.ESTSrvHandler._post_process')
+    def test_071_do_post(self, mock_process):
+        """ test do get """
+        mock_process.return_value = ['code', 'content_type', 'content_length', 'encoding', 'content']
+        self.esthandler.client_address = ('127.0.0.1', 8080)
+        self.esthandler.path = '/'
+        self.esthandler.requestline = 'requestline'
+        self.esthandler.request_version = 'HTTP/0.9'
+        self.esthandler.rfile = Mock()
+        self.esthandler.rfile.readline = Mock()
+        self.esthandler.rfile.readline.side_effect = [b'11', b'12345678901234567', b'', b'0', b'']
+        self.esthandler.wfile = Mock()
+        self.esthandler.headers = {'Transfer-Encoding': 'chunked'}
+        self.assertFalse(self.esthandler.do_POST())
+
 
 if __name__ == '__main__':
     unittest.main()

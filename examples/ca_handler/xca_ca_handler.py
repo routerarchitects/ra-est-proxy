@@ -352,6 +352,9 @@ class CAhandler(object):
         key_usage_list = ['digitalSignature', 'nonRepudiation', 'keyEncipherment', 'dataEncipherment', 'keyAgreement', 'keyCertSign', 'cRLSign', 'encipherOnly', 'decipherOnly']
 
         kuval = int(ku_val)
+        if kuval == 0:
+            self.logger.debug('CAhandler._extension_list_generate(): defaulting ku_val to 23')
+            kuval = 23        
         kubin = '{0:b}'.format(kuval)[::-1]
         ku_list = []
         for idx, ele in enumerate(kubin):

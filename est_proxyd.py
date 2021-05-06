@@ -26,12 +26,20 @@ def _arg_parse():
 def _config_load(debug=None, cfg_file=None):
     """ load config from file """
     config_dic = config_load(debug, cfg_file=cfg_file)
-    debug = config_dic.getboolean('DEFAULT', 'debug', fallback=False)
+    try:
+        debug = config_dic.getboolean('DEFAULT', 'debug', fallback=False)
+    except BaseException:
+        debug = False
+
     svc_dic = {}
     if 'Daemon' in config_dic:
         svc_dic['Daemon'] = {}
         svc_dic['Daemon']['address'] = config_dic.get('Daemon', 'address', fallback=None)
-        svc_dic['Daemon']['port'] = int(config_dic.get('Daemon', 'port', fallback='1443'))
+        try:
+            svc_dic['Daemon']['port'] = int(config_dic.get('Daemon', 'port', fallback='1443'))
+        except ValueError:
+            print('defaulting port to 1443')
+            svc_dic['Daemon']['port'] = 1443
 
     return(debug, svc_dic)
 
@@ -46,6 +54,7 @@ def srv_run(logger, server_class=SecureServer, handler_class=ESTSrvHandler, addr
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
+        logger.info('srv_run(): keyboard interrupt}'.format(address, port))
         pass
     httpd.server_close()
     logger.info('stopping est_proxy on {0}:{1}'.format(address, port))
