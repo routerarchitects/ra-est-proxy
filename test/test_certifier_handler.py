@@ -635,6 +635,58 @@ class TestACMEHandler(unittest.TestCase):
         mock_get.side_effect = [mockresponse1, mockresponse2]
         self.assertEqual('-----BEGIN CERTIFICATE-----\ncertificateBase641\n-----END CERTIFICATE-----\n', self.cahandler._pem_cert_chain_generate(cert_dic))
 
+    def test_066__enter__(self):
+        """ test __enter__ """
+        self.cahandler.__enter__()
+
+    @patch('examples.ca_handler.certifier_ca_handler.CAhandler._ca_get_properties')
+    def test_067_ca_certs_get(self, mock_caprops):
+        """ test ca_certs_get with empty ca_cert_dic """
+        mock_caprops.return_value = {}
+        self.assertFalse(self.cahandler.ca_certs_get())
+
+    @patch('examples.ca_handler.certifier_ca_handler.CAhandler._ca_get_properties')
+    def test_068_ca_certs_get(self, mock_caprops):
+        """ test ca_certs_get with string ca_cert_dic """
+        mock_caprops.return_value = 'string'
+        self.assertFalse(self.cahandler.ca_certs_get())
+
+    @patch('examples.ca_handler.certifier_ca_handler.CAhandler._ca_get_properties')
+    def test_069_ca_certs_get(self, mock_caprops):
+        """ test ca_certs_get with string ca_cert_dic """
+        mock_caprops.return_value = []
+        self.assertFalse(self.cahandler.ca_certs_get())
+
+    @patch('examples.ca_handler.certifier_ca_handler.CAhandler._ca_get_properties')
+    def test_070_ca_certs_get(self, mock_caprops):
+        """ test ca_certs_get with string ca_cert_dic """
+        mock_caprops.return_value = {'foo': 'bar'}
+        self.assertFalse(self.cahandler.ca_certs_get())
+
+    @patch('examples.ca_handler.certifier_ca_handler.CAhandler._ca_get_properties')
+    def test_071_ca_certs_get(self, mock_caprops):
+        """ test ca_certs_get with string ca_cert_dic """
+        mock_caprops.return_value = {'certificates': 'bar'}
+        self.assertFalse(self.cahandler.ca_certs_get())
+
+    @patch('requests.get')
+    @patch('examples.ca_handler.certifier_ca_handler.CAhandler._ca_get_properties')
+    def test_072_ca_certs_get(self, mock_caprops,  mock_get):
+        """ test ca_certs_get with string ca_cert_dic """
+        mock_caprops.return_value = {'certificates': {'active': 1}}
+        mock_get.side_effect = requests.exceptions.HTTPError
+        self.assertFalse(self.cahandler.ca_certs_get())
+
+    @patch('examples.ca_handler.certifier_ca_handler.CAhandler._pem_cert_chain_generate')
+    @patch('requests.get')
+    @patch('examples.ca_handler.certifier_ca_handler.CAhandler._ca_get_properties')
+    def test_072_ca_certs_get(self, mock_caprops,  mock_get, mock_pem_gen):
+        """ test ca_certs_get with string ca_cert_dic """
+        mock_caprops.return_value = {'certificates': {'active': 1}}
+        mock_get.json.return_value = 'foo'
+        mock_pem_gen.return_value = 'bundle'
+        self.assertEqual('bundle', self.cahandler.ca_certs_get())
+
 if __name__ == '__main__':
 
     unittest.main()
