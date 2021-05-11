@@ -1283,6 +1283,44 @@ class TestACMEHandler(unittest.TestCase):
         mock_dump.return_value = 'dump'
         self.assertEqual('pem_file', self.cahandler.ca_certs_get())
 
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._cert_insert')
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._item_insert')
+    def test_155__store_cert(self, mock_i_insert, mock_c_insert):
+        """ test insert """
+        mock_i_insert.return_value = 1
+        mock_c_insert.return_value = 2
+        self.cahandler._store_cert('ca_id', 'cert_name', 'serial', 'cert', 'name_hash', 'issuer_hash')
+        self.assertTrue(mock_i_insert.called)
+        self.assertTrue(mock_c_insert.called)
+
+    @patch('examples.ca_handler.xca_ca_handler.dict_from_row')
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._db_close')
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._db_open')
+    def test_156_revocation_search(self, mock_open, mock_close, mock_dicfrow):
+        """ revocation search  """
+        mock_dicfrow.return_value = {'foo': 'bar'}
+        mock_open.return_value = True
+        mock_close.return_value = True
+        self.cahandler.cursor = Mock()
+        self.assertEqual({'foo': 'bar'}, self.cahandler._revocation_search('column', 'value'))
+        self.assertTrue(mock_open.called)
+        self.assertTrue(mock_close.called)
+        self.assertTrue(mock_dicfrow.called)
+
+    @patch('examples.ca_handler.xca_ca_handler.dict_from_row')
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._db_close')
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._db_open')
+    def test_157_revocation_search(self, mock_open, mock_close, mock_dicfrow):
+        """ revocation search  dicfromrow throws exception """
+        mock_dicfrow.side_effect = Exception('exc_dicfromrow')
+        mock_open.return_value = True
+        mock_close.return_value = True
+        self.cahandler.cursor = Mock()
+        self.assertFalse(self.cahandler._revocation_search('column', 'value'))
+        self.assertTrue(mock_open.called)
+        self.assertTrue(mock_close.called)
+        self.assertTrue(mock_dicfrow.called)
+
 
 if __name__ == '__main__':
 
