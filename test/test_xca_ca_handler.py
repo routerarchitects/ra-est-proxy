@@ -129,6 +129,16 @@ class TestACMEHandler(unittest.TestCase):
         self.cahandler.issuing_ca_name = 'bar'
         self.assertEqual((None, None), self.cahandler._ca_cert_load())
 
+    @patch('OpenSSL.crypto.load_certificate')
+    def test_014_ca_cert_load(self, mock_certload):
+        """ CAhandler._ca_cert_load """
+        self.cahandler.xdb_file = self.dir_path + '/ca/est_proxy.xdb'
+        self.cahandler.issuing_ca_name = 'sub-ca'
+        mock_certload.side_effect = Exception('exc_cert_load')
+        with self.assertLogs('test_a2c', level='INFO') as lcm:
+            self.assertEqual((None, None, None), self.cahandler._ca_load())
+        self.assertIn('ERROR:test_a2c:CAhandler._ca_cert_load() failed with error: exc_cert_load', lcm.output)
+
     def test_014_ca_key_load(self):
         """ CAhandler._ca_key_load """
         self.cahandler.xdb_file = self.dir_path + '/ca/est_proxy.xdb'
@@ -149,6 +159,17 @@ class TestACMEHandler(unittest.TestCase):
         self.cahandler.issuing_ca_name = 'sub-ca'
         # self.cahandler.passphrase = 'wrongpw'
         self.assertFalse(self.cahandler._ca_key_load())
+
+    @patch('OpenSSL.crypto.load_privatekey')
+    def test_017_ca_key_load(self, mock_key):
+        """ CAhandler._ca_key_load """
+        self.cahandler.xdb_file = self.dir_path + '/ca/est_proxy.xdb'
+        self.cahandler.issuing_ca_key = 'sub-ca'
+        self.cahandler.passphrase = 'test1234'
+        mock_key.side_effect = Exception('exc_key_load')
+        with self.assertLogs('test_a2c', level='INFO') as lcm:
+            self.cahandler._ca_key_load()
+        self.assertIn('ERROR:test_a2c:CAhandler._ca_key_load() failed with error: exc_key_load', lcm.output)
 
     def test_017_csr_insert(self):
         """ CAhandler._csr_insert empty item dic """
@@ -211,7 +232,7 @@ class TestACMEHandler(unittest.TestCase):
         self.cahandler.xdb_file = self.dir_path + '/ca/est_proxy.xdb'
         self.cahandler.issuing_ca_name = 'sub-ca'
         item_dic = {'name': 'name', 'type': 2, 'source': 0, 'date': 'date', 'comment': 'comment'}
-        self.assertEqual(14, self.cahandler._item_insert(item_dic))
+        self.assertEqual(15, self.cahandler._item_insert(item_dic))
 
     def test_026_item_insert(self):
         """ CAhandler._item_insert no name """
@@ -1190,6 +1211,35 @@ class TestACMEHandler(unittest.TestCase):
         mock_crypto.side_effect = return_input
         result = [(b'subjectKeyIdentifier', False, b'hash'), (b'authorityKeyIdentifier', False, b'keyid:always')]
         self.assertEqual(result, self.cahandler._extension_list_generate(template_dic, cert, ca_cert))
+
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._config_load')
+    def test_150__enter__(self, mock_cfg):
+        """ test enter """
+        mock_cfg.return_value = True
+        self.cahandler.__enter__()
+        self.assertTrue(mock_cfg.called)
+
+    def test_151_trigger(self):
+        """ test trigger """
+        self.assertEqual(('Method not implemented.', None, None), self.cahandler.trigger('payload'))
+
+    def test_152_poll(self):
+        """ test poll """
+        self.assertEqual(('Method not implemented.', None, None, 'poll_identifier', False), self.cahandler.poll('cert_name', 'poll_identifier','csr'))
+
+    def test_153_stub_func(self):
+        """ test stubfunc """
+        self.assertEqual('parameter', self.cahandler._stub_func('parameter'))
+
+    @patch('OpenSSL.crypto.dump_certificate')
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._pemcertchain_generate')
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._ca_load')
+    def test_154_ca_certs_get(self, mock_load, mock_gen, mock_dump):
+        """ test ca_certs_get """
+        mock_load.return_value =  ['ca_key', 'ca_cert', 'ca_id']
+        mock_gen.return_value = 'pem_file'
+        mock_dump.return_value = 'dump'
+        self.assertEqual('pem_file', self.cahandler.ca_certs_get())
 
 
 if __name__ == '__main__':

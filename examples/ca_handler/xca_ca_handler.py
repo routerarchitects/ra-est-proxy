@@ -354,7 +354,7 @@ class CAhandler(object):
         kuval = int(ku_val)
         if kuval == 0:
             self.logger.debug('CAhandler._extension_list_generate(): defaulting ku_val to 23')
-            kuval = 23        
+            kuval = 23
         kubin = '{0:b}'.format(kuval)[::-1]
         ku_list = []
         for idx, ele in enumerate(kubin):
@@ -485,6 +485,7 @@ class CAhandler(object):
         """" load config from file """
         self.logger.debug('CAhandler._stub_func({0})'.format(parameter))
         self.logger.debug('CAhandler._stub_func() ended')
+        return parameter
 
     def _subject_modify(self, subject, dn_dic):
         """ modify subject name """
