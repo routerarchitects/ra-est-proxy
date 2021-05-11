@@ -620,6 +620,34 @@ class TestACMEHandler(unittest.TestCase):
         self.cahandler._config_load()
         self.assertEqual('foo', self.cahandler.template_name)
 
+    @patch('examples.ca_handler.xca_ca_handler.config_load')
+    def test_079_config_load(self, mock_load_cfg):
+        """ test _config_load - load template """
+        mock_load_cfg.return_value = {'CAhandler': {'xdb_file': 'foo'}}
+        self.cahandler._config_load()
+        self.assertEqual('foo', self.cahandler.xdb_file)
+
+    @patch('examples.ca_handler.xca_ca_handler.config_load')
+    def test_080_config_load(self, mock_load_cfg):
+        """ test _config_load - load template """
+        mock_load_cfg.return_value = {'CAhandler': {'passphrase': 'foo'}}
+        self.cahandler._config_load()
+        self.assertEqual('foo', self.cahandler.passphrase)
+
+    @patch('examples.ca_handler.xca_ca_handler.config_load')
+    def test_081_config_load(self, mock_load_cfg):
+        """ test _config_load - load template """
+        mock_load_cfg.return_value = {'CAhandler': {'issuing_ca_name': 'foo'}}
+        self.cahandler._config_load()
+        self.assertEqual('foo', self.cahandler.issuing_ca_name)
+
+    @patch('examples.ca_handler.xca_ca_handler.config_load')
+    def test_082_config_load(self, mock_load_cfg):
+        """ test _config_load - load template """
+        mock_load_cfg.return_value = {'CAhandler': {'issuing_ca_key': 'foo'}}
+        self.cahandler._config_load()
+        self.assertEqual('foo', self.cahandler.issuing_ca_key)
+
     def test_079_stream_split(self):
         """ test stream_split - all ok """
         byte_stream = b'before\x00\x00\x00\x0cafter'
@@ -897,6 +925,12 @@ class TestACMEHandler(unittest.TestCase):
         """ CAhandler._kue_generate() - all """
         kup = 511
         self.assertEqual('digitalSignature,nonRepudiation,keyEncipherment,dataEncipherment,keyAgreement,keyCertSign,cRLSign,encipherOnly,decipherOnly', self.cahandler._kue_generate(kup))
+
+    def test_125__kue_generate(self):
+        """ CAhandler._kue_generate() - all """
+        kup = 0
+        self.assertEqual('digitalSignature,nonRepudiation,keyEncipherment,keyAgreement', self.cahandler._kue_generate(kup))
+
 
     def test_125__subject_modify(self):
         """ CAhandler._subject_modify() empty dn_dic """
@@ -1218,6 +1252,14 @@ class TestACMEHandler(unittest.TestCase):
         mock_cfg.return_value = True
         self.cahandler.__enter__()
         self.assertTrue(mock_cfg.called)
+
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._config_load')
+    def test_151__enter__(self, mock_cfg):
+        """ test enter """
+        self.cahandler.xdb_file = self.dir_path + '/ca/est_proxy.xdb'
+        mock_cfg.return_value = True
+        self.cahandler.__enter__()
+        self.assertFalse(mock_cfg.called)
 
     def test_151_trigger(self):
         """ test trigger """
