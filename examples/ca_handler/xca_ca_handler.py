@@ -27,6 +27,7 @@ class CAhandler(object):
         self.cert_validity_days = 365
         self.ca_cert_chain_list = []
         self.template_name = None
+        self.cursor = None
 
     def __enter__(self):
         """ Makes ACMEHandler a Context Manager """

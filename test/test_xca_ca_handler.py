@@ -38,7 +38,7 @@ class TestACMEHandler(unittest.TestCase):
         import logging
         from examples.ca_handler.xca_ca_handler import CAhandler
         logging.basicConfig(level=logging.CRITICAL)
-        self.logger = logging.getLogger('test_a2c')
+        self.logger = logging.getLogger('test_est')
         self.cahandler = CAhandler(False, self.logger)
         self.dir_path = os.path.dirname(os.path.realpath(__file__))
         _prepare(self.dir_path)
@@ -135,9 +135,9 @@ class TestACMEHandler(unittest.TestCase):
         self.cahandler.xdb_file = self.dir_path + '/ca/est_proxy.xdb'
         self.cahandler.issuing_ca_name = 'sub-ca'
         mock_certload.side_effect = Exception('exc_cert_load')
-        with self.assertLogs('test_a2c', level='INFO') as lcm:
+        with self.assertLogs('test_est', level='INFO') as lcm:
             self.assertEqual((None, None, None), self.cahandler._ca_load())
-        self.assertIn('ERROR:test_a2c:CAhandler._ca_cert_load() failed with error: exc_cert_load', lcm.output)
+        self.assertIn('ERROR:test_est:CAhandler._ca_cert_load() failed with error: exc_cert_load', lcm.output)
 
     def test_014_ca_key_load(self):
         """ CAhandler._ca_key_load """
@@ -167,9 +167,9 @@ class TestACMEHandler(unittest.TestCase):
         self.cahandler.issuing_ca_key = 'sub-ca'
         self.cahandler.passphrase = 'test1234'
         mock_key.side_effect = Exception('exc_key_load')
-        with self.assertLogs('test_a2c', level='INFO') as lcm:
+        with self.assertLogs('test_est', level='INFO') as lcm:
             self.cahandler._ca_key_load()
-        self.assertIn('ERROR:test_a2c:CAhandler._ca_key_load() failed with error: exc_key_load', lcm.output)
+        self.assertIn('ERROR:test_est:CAhandler._ca_key_load() failed with error: exc_key_load', lcm.output)
 
     def test_017_csr_insert(self):
         """ CAhandler._csr_insert empty item dic """
@@ -302,67 +302,119 @@ class TestACMEHandler(unittest.TestCase):
     def test_035_cert_insert(self):
         """ CAhandler._csr_import with empty cert_dic """
         cert_dic = {}
-        self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        error = "ERROR:test_est:CAhandler._cert_insert() aborted. dataset empty"
+        self.assertIn(error, lcm.output)
 
     def test_036_cert_insert(self):
         """ CAhandler._csr_import item missing """
         cert_dic = {'serial': 'serial', 'issuer': 'issuer', 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}
-        self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        error = "ERROR:test_est:CAhandler._cert_insert() aborted. dataset incomplete: {'serial': 'serial', 'issuer': 'issuer', 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}"
+        self.assertIn(error, lcm.output)
 
     def test_037_cert_insert(self):
         """ CAhandler._csr_import serial missing """
         cert_dic = {'item': 'item', 'issuer': 'issuer', 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}
-        self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        error = "ERROR:test_est:CAhandler._cert_insert() aborted. dataset incomplete: {'item': 'item', 'issuer': 'issuer', 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}"
+        self.assertIn(error, lcm.output)
 
     def test_038_cert_insert(self):
         """ CAhandler._csr_import issuer missing """
         cert_dic = {'item': 'item', 'serial': 'serial', 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}
-        self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        error = "ERROR:test_est:CAhandler._cert_insert() aborted. dataset incomplete: {'item': 'item', 'serial': 'serial', 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}"
+        self.assertIn(error, lcm.output)
 
     def test_039_cert_insert(self):
         """ CAhandler._csr_import ca missing """
         cert_dic = {'item': 'item', 'serial': 'serial', 'issuer': 'issuer', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}
-        self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        error = "ERROR:test_est:CAhandler._cert_insert() aborted. dataset incomplete: {'item': 'item', 'serial': 'serial', 'issuer': 'issuer', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}"
+        self.assertIn(error, lcm.output)
 
     def test_040_cert_insert(self):
         """ CAhandler._csr_import cert missing """
         cert_dic = {'item': 'item', 'serial': 'serial', 'issuer': 'issuer', 'ca': 'ca', 'iss_hash': 'iss_hash', 'hash': 'hash'}
-        self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        error = "ERROR:test_est:CAhandler._cert_insert() aborted. dataset incomplete: {'item': 'item', 'serial': 'serial', 'issuer': 'issuer', 'ca': 'ca', 'iss_hash': 'iss_hash', 'hash': 'hash'}"
+        self.assertIn(error, lcm.output)
 
     def test_041_cert_insert(self):
         """ CAhandler._csr_import iss_hash missing """
         cert_dic = {'item': 'item', 'serial': 'serial', 'issuer': 'issuer', 'ca': 'ca', 'cert': 'cert', 'hash': 'hash'}
-        self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        error = "ERROR:test_est:CAhandler._cert_insert() aborted. dataset incomplete: {'item': 'item', 'serial': 'serial', 'issuer': 'issuer', 'ca': 'ca', 'cert': 'cert', 'hash': 'hash'}"
+        self.assertIn(error, lcm.output)
 
     def test_042_cert_insert(self):
         """ CAhandler._csr_import hash missing """
         cert_dic = {'item': 'item', 'serial': 'serial', 'issuer': 'issuer', 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash'}
-        self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        error = "ERROR:test_est:CAhandler._cert_insert() aborted. dataset incomplete: {'item': 'item', 'serial': 'serial', 'issuer': 'issuer', 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash'}"
+        self.assertIn(error, lcm.output)
 
     def test_043_cert_insert(self):
         """ CAhandler._csr_import with item not int """
         cert_dic = {'item': 'item', 'serial': 'serial', 'issuer': 'issuer', 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}
-        self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        error = "ERROR:test_est:CAhandler._cert_insert() aborted. wrong datatypes: {'item': 'item', 'serial': 'serial', 'issuer': 'issuer', 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}"
+        self.assertIn(error, lcm.output)
 
     def test_044_cert_insert(self):
         """ CAhandler._csr_import with issuer not int """
         cert_dic = {'item': 1, 'serial': 'serial', 'issuer': 'issuer', 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}
-        self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        error = "ERROR:test_est:CAhandler._cert_insert() aborted. wrong datatypes: {'item': 1, 'serial': 'serial', 'issuer': 'issuer', 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}"
+        self.assertIn(error, lcm.output)
 
     def test_045_cert_insert(self):
         """ CAhandler._csr_import with ca not int """
         cert_dic = {'item': 1, 'serial': 'serial', 'issuer': 1, 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}
-        self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        error = "ERROR:test_est:CAhandler._cert_insert() aborted. wrong datatypes: {'item': 1, 'serial': 'serial', 'issuer': 1, 'ca': 'ca', 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}"
+        self.assertIn(error, lcm.output)
 
     def test_046_cert_insert(self):
         """ CAhandler._csr_import with iss_hash not int """
         cert_dic = {'item': 1, 'serial': 'serial', 'issuer': 2, 'ca': 3, 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}
-        self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        error = "ERROR:test_est:CAhandler._cert_insert() aborted. wrong datatypes: {'item': 1, 'serial': 'serial', 'issuer': 2, 'ca': 3, 'cert': 'cert', 'iss_hash': 'iss_hash', 'hash': 'hash'}"
+        self.assertIn(error, lcm.output)
 
     def test_047_cert_insert(self):
         """ CAhandler._csr_import with hash not int """
         cert_dic = {'item': 1, 'serial': 'serial', 'issuer': 2, 'ca': 3, 'cert': 'cert', 'iss_hash': 4, 'hash': 'hash'}
-        self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._cert_insert(cert_dic))
+        error = "ERROR:test_est:CAhandler._cert_insert() aborted. wrong datatypes: {'item': 1, 'serial': 'serial', 'issuer': 2, 'ca': 3, 'cert': 'cert', 'iss_hash': 4, 'hash': 'hash'}"
+        self.assertIn(error, lcm.output)
+
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._db_close')
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._db_open')
+    def test_048_cert_insert(self, mock_open, mock_close):
+        """ CAhandler._csr_import with hash not int """
+        cert_dic = {'item': 1, 'serial': 'serial', 'issuer': 2, 'ca': 3, 'cert': 'cert', 'iss_hash': 4, 'hash': 5}
+        mock_open.return_value = True
+        mock_close.return_value = True
+        self.cahandler.cursor = Mock()
+        self.cahandler.cursor.lastrowid = 5
+        self.assertEqual(5, self.cahandler._cert_insert(cert_dic))
+        self.assertTrue(mock_open.called)
+        self.assertTrue(mock_close.called)
 
     def test_048_pemcertchain_generate(self):
         """ CAhandler._pemcertchain_generate no certificates """
@@ -478,42 +530,78 @@ class TestACMEHandler(unittest.TestCase):
     def test_060_cert_insert(self):
         """ CAhandler._revocation_insert with empty rev_dic """
         rev_dic = {}
-        self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        error = 'ERROR:test_est:CAhandler._revocation_insert() aborted. dataset empty'
+        self.assertIn(error, lcm.output)
 
     def test_061_cert_insert(self):
         """ CAhandler._revocation_insert no caID """
         rev_dic = {'serial': 'serial', 'date': 'date', 'invaldate': 'invaldate', 'reasonBit': 0}
-        self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        error = "ERROR:test_est:CAhandler._revocation_insert() aborted. dataset incomplete: {'serial': 'serial', 'date': 'date', 'invaldate': 'invaldate', 'reasonBit': 0}"
+        self.assertIn(error, lcm.output)
 
     def test_062_cert_insert(self):
         """ CAhandler._revocation_insert no serial """
         rev_dic = {'caID': 4, 'date': 'date', 'invaldate': 'invaldate', 'reasonBit': 0}
-        self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        error = "ERROR:test_est:CAhandler._revocation_insert() aborted. dataset incomplete: {'caID': 4, 'date': 'date', 'invaldate': 'invaldate', 'reasonBit': 0}"
+        self.assertIn(error, lcm.output)
 
     def test_063_cert_insert(self):
         """ CAhandler._revocation_insert no date """
         rev_dic = {'caID': 4, 'serial': 'serial', 'invaldate': 'invaldate', 'reasonBit': 0}
-        self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        error = "ERROR:test_est:CAhandler._revocation_insert() aborted. dataset incomplete: {'caID': 4, 'serial': 'serial', 'invaldate': 'invaldate', 'reasonBit': 0}"
+        self.assertIn(error, lcm.output)
 
     def test_064_cert_insert(self):
         """ CAhandler._revocation_insert no invaldate """
         rev_dic = {'caID': 4, 'serial': 'serial', 'date': 'date', 'reasonBit': 0}
-        self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        error = "ERROR:test_est:CAhandler._revocation_insert() aborted. dataset incomplete: {'caID': 4, 'serial': 'serial', 'date': 'date', 'reasonBit': 0}"
+        self.assertIn(error, lcm.output)
 
     def test_065_cert_insert(self):
         """ CAhandler._revocation_insert no resonBit """
         rev_dic = {'caID': 4, 'serial': 'serial', 'date': 'date', 'invaldate': 'invaldate'}
-        self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        error = "ERROR:test_est:CAhandler._revocation_insert() aborted. dataset incomplete: {'caID': 4, 'serial': 'serial', 'date': 'date', 'invaldate': 'invaldate'}"
+        self.assertIn(error, lcm.output)
 
     def test_066_cert_insert(self):
         """ CAhandler._revocation_insert with caID is not int """
         rev_dic = {'caID': 'caID', 'serial': 'serial', 'date': 'date', 'invaldate': 'invaldate', 'reasonBit': 0}
-        self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        error = "ERROR:test_est:CAhandler._revocation_insert() aborted. wrong datatypes: {'caID': 'caID', 'serial': 'serial', 'date': 'date', 'invaldate': 'invaldate', 'reasonBit': 0}"
+        self.assertIn(error, lcm.output)
 
     def test_067_cert_insert(self):
         """ CAhandler._revocation_insert with caID is not int """
         rev_dic = {'caID': 0, 'serial': 'serial', 'date': 'date', 'invaldate': 'invaldate', 'reasonBit': '0'}
-        self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertFalse(self.cahandler._revocation_insert(rev_dic))
+        error = "ERROR:test_est:CAhandler._revocation_insert() aborted. wrong datatypes: {'caID': 0, 'serial': 'serial', 'date': 'date', 'invaldate': 'invaldate', 'reasonBit': '0'}"
+        self.assertIn(error, lcm.output)
+
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._db_close')
+    @patch('examples.ca_handler.xca_ca_handler.CAhandler._db_open')
+    def test_068_rev_insert(self, mock_open, mock_close):
+        """ CAhandler._revocation_insert with caID is not inall okt """
+        mock_close.return_value = True
+        self.cahandler.cursor = Mock()
+        self.cahandler.cursor.lastrowid = 5
+        rev_dic = {'caID': 0, 'serial': 'serial', 'date': 'date', 'invaldate': 'invaldate', 'reasonBit': 0}
+        self.assertEqual(5, self.cahandler._revocation_insert(rev_dic))
+        self.assertTrue(mock_open.called)
+        self.assertTrue(mock_close.called)
 
     @patch('examples.ca_handler.xca_ca_handler.uts_to_date_utc')
     def test_068_revoke(self, mock_date):
@@ -608,10 +696,10 @@ class TestACMEHandler(unittest.TestCase):
     def test_077_config_load(self, mock_load_cfg):
         """ test _config_load - ca_chain is not json format """
         mock_load_cfg.return_value = {'CAhandler': {'ca_cert_chain_list': '[foo]'}}
-        with self.assertLogs('test_a2c', level='INFO') as lcm:
+        with self.assertLogs('test_est', level='INFO') as lcm:
             self.cahandler._config_load()
         self.assertFalse(self.cahandler.ca_cert_chain_list)
-        self.assertIn('ERROR:test_a2c:CAhandler._config_load(): parameter "ca_cert_chain_list" cannot be loaded: Expecting value: line 1 column 2 (char 1)', lcm.output)
+        self.assertIn('ERROR:test_est:CAhandler._config_load(): parameter "ca_cert_chain_list" cannot be loaded: Expecting value: line 1 column 2 (char 1)', lcm.output)
 
     @patch('examples.ca_handler.xca_ca_handler.config_load')
     def test_078_config_load(self, mock_load_cfg):
