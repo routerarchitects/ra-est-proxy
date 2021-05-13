@@ -11,7 +11,7 @@ import base64
 import textwrap
 import OpenSSL
 import pytz
-from tlslite import SessionCache, HandshakeSettings
+from tlslite import SessionCache, HandshakeSettings, VerifierDB
 from tlslite.constants import CipherSuite, HashAlgorithm, SignatureAlgorithm, GroupName, SignatureScheme
 
 def b64decode_pad(logger, string):
@@ -75,6 +75,64 @@ def cert_pem2der(pem_file):
     """ convert certificate pem to der """
     certobj = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, pem_file)
     return OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_ASN1, certobj)
+
+def cert_san_get(logger, certificate, recode=True):
+    """ get subject alternate names from certificate """
+    logger.debug('cert_san_get()')
+    if recode:
+        pem_file = build_pem_file(logger, None, b64_url_recode(logger, certificate), True)
+    else:
+        pem_file = certificate
+
+    cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, pem_file)
+    san = []
+    ext_count = cert.get_extension_count()
+    for i in range(0, ext_count):
+        ext = cert.get_extension(i)
+        if 'subjectAltName' in str(ext.get_short_name()):
+            san_list = ext.__str__().split(',')
+            for san_name in san_list:
+                san_name = san_name.rstrip()
+                san_name = san_name.lstrip()
+                san.append(san_name)
+    logger.debug('cert_san_get() ended')
+    return san
+
+def cert_eku_get(logger, certificate, recode=True):
+    """ get extended key usage from certificate """
+    logger.debug('cert_eku_get()')
+    if recode:
+        pem_file = build_pem_file(logger, None, b64_url_recode(logger, certificate), True)
+    else:
+        pem_file = certificate
+
+    cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, pem_file)
+    eku = None
+    ext_count = cert.get_extension_count()
+    for i in range(0, ext_count):
+        ext = cert.get_extension(i)
+        if 'extendedKeyUsage' in str(ext.get_short_name()):
+            eku = cert.get_extension(i).get_data()
+    logger.debug('cert_eku_get() ended')
+    return eku
+
+def cert_extensions_get(logger, certificate, recode=True):
+    """ get extenstions from certificate certificate """
+    logger.debug('cert_extensions_get()')
+    if recode:
+        pem_file = build_pem_file(logger, None, b64_url_recode(logger, certificate), True)
+    else:
+        pem_file = certificate
+
+    cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, pem_file)
+    extension_list = []
+    ext_count = cert.get_extension_count()
+    for i in range(0, ext_count):
+        ext = cert.get_extension(i)
+        extension_list.append(convert_byte_to_string(base64.b64encode(ext.get_data())))
+
+    logger.debug('cert_extensions_get() ended with: {0}'.format(extension_list))
+    return extension_list
 
 def cert_serial_get(logger, certificate):
     """ get serial number form certificate """
@@ -199,9 +257,9 @@ def logger_setup(debug, cfg_file=None):
     logger = logging.getLogger('est_proxy')
     return logger
 
-def hssrv_options_get(logger, task, config_dic):
+def hssrv_options_get(logger, config_dic):
     """ get parameters for handshake server """
-    logger.debug('hssrv_options_get({0})'.format(task))
+    logger.debug('hssrv_options_get()')
 
     hs_settings = HandshakeSettings()
 
@@ -215,22 +273,30 @@ def hssrv_options_get(logger, task, config_dic):
     #                            for item in cipher.split(',')]
 
     option_dic = {}
-    if task == 'ClientAuth':
-        if 'ClientAuth' in config_dic:
-            if 'cert_file' in config_dic['ClientAuth'] and 'key_file' in config_dic['ClientAuth']:
-                # logger.error('Helper.hssrv_options_get(): ClientAuth specified but not configured in config file')
-                option_dic['certChain'] = config_dic['ClientAuth']['cert_file']
-                option_dic['privateKey'] = config_dic['ClientAuth']['key_file']
-                option_dic['sessionCache'] = SessionCache()
-                option_dic['alpn'] = [bytearray(b'http/1.1')]
-                option_dic['settings'] = hs_settings
-                option_dic['reqCert'] = True
-                option_dic['sni'] = None
-            else:
-                logger.error('Helper.hssrv_options_get(): incomplete ClientAuth configuration in config file')
+    if 'Daemon' in config_dic:
+        if 'cert_file' in config_dic['Daemon'] and 'key_file' in config_dic['Daemon']:
+            option_dic['certChain'] = config_dic['Daemon']['cert_file']
+            option_dic['privateKey'] = config_dic['Daemon']['key_file']
+            option_dic['sessionCache'] = SessionCache()
+            option_dic['alpn'] = [bytearray(b'http/1.1')]
+            option_dic['settings'] = hs_settings
+            option_dic['reqCert'] = True
+            option_dic['sni'] = None
         else:
-            logger.error('Helper.hssrv_options_get(): ClientAuth specified but not configured in config file')
+            logger.error('Helper.hssrv_options_get(): incomplete Daemon configuration in config file')
+    else:
+        logger.error('Helper.hssrv_options_get(): Daemon specified but not configured in config file')
 
+    if 'SRP' in config_dic:
+        if 'userdb' in config_dic['SRP']:
+            try:
+                srp_db = VerifierDB(config_dic['SRP']['userdb'])
+                srp_db.open()
+                option_dic['verifierDB'] = srp_db
+            except BaseException as err:
+                logger.error('Helper.hssrv_options_get(): SRP database {0} could not get loaded.'.format(config_dic['SRP']['userdb']))
+                logger.error('Helper.hssrv_options_get(): Error: {0}'.format(err))
+    logger.debug('hssrv_options_get() ended')
     return option_dic
 
 def uts_now():

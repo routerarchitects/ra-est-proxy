@@ -5,6 +5,7 @@
 import unittest
 import sys
 import importlib
+import io
 from unittest.mock import patch, Mock, mock_open
 
 sys.path.insert(0, '.')
@@ -547,10 +548,13 @@ foo
         """ _auth_check() clientauth """
         obj = Mock()
         obj.session = Mock()
-        obj.session.clientCertChain = 'clientCertChain'
+        obj.session.clientCertChain = Mock()
+        obj.session.clientCertChain.getFingerprint = Mock(return_value='clientCertChain')
         obj.session.srpUsername = None
         self.esthandler.connection = obj
-        self.assertTrue(self.esthandler._auth_check())
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertTrue(self.esthandler._auth_check())
+        self.assertIn('INFO:test_est:Client X.509 SHA1 fingerprint: clientCertChain', lcm.output)
 
     def test_059__auth_check(self):
         """ _auth_check() clientauth """
@@ -559,16 +563,141 @@ foo
         obj.session.clientCertChain = None
         obj.session.srpUsername = 'srpUsername'
         self.esthandler.connection = obj
-        self.assertTrue(self.esthandler._auth_check())
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertTrue(self.esthandler._auth_check())
+        self.assertIn('INFO:test_est:Client SRP username: srpUsername', lcm.output)
 
     def test_060__auth_check(self):
         """ _auth_check() clientauth """
         obj = Mock()
         obj.session = Mock()
-        obj.session.clientCertChain = 'clientCertChain'
+        obj.session.clientCertChain = Mock()
+        obj.session.clientCertChain.getFingerprint = Mock(return_value='clientCertChain')
         obj.session.srpUsername = 'srpUsername'
         self.esthandler.connection = obj
-        self.assertTrue(self.esthandler._auth_check())
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.assertTrue(self.esthandler._auth_check())
+        self.assertIn('INFO:test_est:Client X.509 SHA1 fingerprint: clientCertChain', lcm.output)
+
+    @patch('os.remove')
+    def test_061__tmpfiles_clean(self, mock_remove):
+        """ __tmpfiles_clean """
+        file_list = ['foo', 'bar']
+        mock_remove.return_value = True
+        self.esthandler._tmpfiles_clean(file_list)
+
+    @patch('os.remove')
+    def test_062_tmpfiles_clean(self, mock_remove):
+        """ __tmpfiles_clean exception for all files """
+        file_list = ['foo', 'bar']
+        mock_remove.side_effect = Exception('_tmpfiles_clean')
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.esthandler._tmpfiles_clean(file_list)
+        self.assertIn('ERROR:test_est:ESTSrvHandler._tmpfiles_clean() failed for foo with error: _tmpfiles_clean', lcm.output)
+        self.assertIn('ERROR:test_est:ESTSrvHandler._tmpfiles_clean() failed for bar with error: _tmpfiles_clean', lcm.output)
+
+    @patch('os.remove')
+    def test_063_tmpfiles_clean(self, mock_remove):
+        """ __tmpfiles_clean exception for last file """
+        file_list = ['foo', 'bar']
+        mock_remove.side_effect = [True, Exception('_tmpfiles_clean')]
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.esthandler._tmpfiles_clean(file_list)
+        self.assertIn('ERROR:test_est:ESTSrvHandler._tmpfiles_clean() failed for bar with error: _tmpfiles_clean', lcm.output)
+
+    @patch('os.remove')
+    def test_064_tmpfiles_clean(self, mock_remove):
+        """ __tmpfiles_clean exception for last file """
+        file_list = ['foo', 'bar']
+        mock_remove.side_effect = [Exception('_tmpfiles_clean'), True]
+        with self.assertLogs('test_est', level='INFO') as lcm:
+            self.esthandler._tmpfiles_clean(file_list)
+        self.assertIn('ERROR:test_est:ESTSrvHandler._tmpfiles_clean() failed for foo with error: _tmpfiles_clean', lcm.output)
+
+    @patch('est_proxy.est_handler.ESTSrvHandler._get_process')
+    def test_065_do_get(self, mock_process):
+        """ test do get """
+        mock_process.return_value = ['code', 'content_type', 'content_length', 'encoding', 'content']
+        self.esthandler.client_address = ('127.0.0.1', 8080)
+        self.esthandler.path = '/'
+        self.esthandler.requestline = 'requestline'
+        self.esthandler.request_version = 'HTTP/0.9'
+        self.esthandler.wfile = Mock()
+        self.assertFalse(self.esthandler.do_GET())
+
+    def test_066__init__(self):
+        """ test __init__ exception when parsing cfg_file """
+        request = Mock()
+        request.makefile.return_value = io.BytesIO(b"GET /")
+        # request.raw_requestline.return_value = 'fooooo'
+        client_address = 'client_address'
+        server_address = 'server_address'
+        self.esthandler.__init__(request, client_address, server_address)
+        self.assertEqual('est_proxy.cfg', self.esthandler.cfg_file)
+
+    def test_067__init__(self):
+        """ test __init__ parsing cfg_file """
+        request = Mock()
+        request.makefile.return_value = io.BytesIO(b"GET /")
+        # request.raw_requestline.return_value = 'fooooo'
+        client_address = 'client_address'
+        server_address = Mock()
+        server_address.cfg_file = 'foo.cfg'
+        self.esthandler.__init__(request, client_address, server_address)
+        self.assertEqual('foo.cfg', self.esthandler.cfg_file)
+
+    def test_068__init__(self):
+        """ test __init__ parsing cfg_file """
+        request = Mock()
+        request.side_effect = Exception('_tmpfiles_clean')
+        request.makefile.return_value = io.BytesIO(b"GET /")
+        request.raw_requestline.return_value = 'fooooo'
+        client_address = 'client_address'
+        server_address = Mock()
+        self.esthandler.__init__()
+        self.assertEqual('est_proxy.cfg', self.esthandler.cfg_file)
+
+    @patch('est_proxy.est_handler.ESTSrvHandler._post_process')
+    def test_069_do_post(self, mock_process):
+        """ test do get """
+        mock_process.return_value = ['code', 'content_type', 'content_length', 'encoding', 'content']
+        self.esthandler.client_address = ('127.0.0.1', 8080)
+        self.esthandler.path = '/'
+        self.esthandler.requestline = 'requestline'
+        self.esthandler.request_version = 'HTTP/0.9'
+        self.esthandler.rfile = Mock()
+        self.esthandler.wfile = Mock()
+        self.esthandler.headers = {'Content-Length': 15}
+        self.assertFalse(self.esthandler.do_POST())
+
+    @patch('est_proxy.est_handler.ESTSrvHandler._post_process')
+    def test_070_do_post(self, mock_process):
+        """ test do get """
+        mock_process.return_value = ['code', 'content_type', 'content_length', 'encoding', 'content']
+        self.esthandler.client_address = ('127.0.0.1', 8080)
+        self.esthandler.path = '/'
+        self.esthandler.requestline = 'requestline'
+        self.esthandler.request_version = 'HTTP/0.9'
+        self.esthandler.rfile = Mock()
+        self.esthandler.wfile = Mock()
+        self.esthandler.headers = {'Content-Length': 0}
+        self.assertFalse(self.esthandler.do_POST())
+
+    @patch('est_proxy.est_handler.ESTSrvHandler._post_process')
+    def test_071_do_post(self, mock_process):
+        """ test do get """
+        mock_process.return_value = ['code', 'content_type', 'content_length', 'encoding', 'content']
+        self.esthandler.client_address = ('127.0.0.1', 8080)
+        self.esthandler.path = '/'
+        self.esthandler.requestline = 'requestline'
+        self.esthandler.request_version = 'HTTP/0.9'
+        self.esthandler.rfile = Mock()
+        self.esthandler.rfile.readline = Mock()
+        self.esthandler.rfile.readline.side_effect = [b'11', b'12345678901234567', b'', b'0', b'']
+        self.esthandler.wfile = Mock()
+        self.esthandler.headers = {'Transfer-Encoding': 'chunked'}
+        self.assertFalse(self.esthandler.do_POST())
+
 
 if __name__ == '__main__':
     unittest.main()

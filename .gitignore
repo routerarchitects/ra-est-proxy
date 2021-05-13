@@ -119,3 +119,4 @@ scripts/*
 certs/*
 data/*
 dev_helper.py
+.coveralls.yml

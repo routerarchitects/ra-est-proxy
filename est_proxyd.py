@@ -26,12 +26,20 @@ def _arg_parse():
 def _config_load(debug=None, cfg_file=None):
     """ load config from file """
     config_dic = config_load(debug, cfg_file=cfg_file)
-    debug = config_dic.getboolean('DEFAULT', 'debug', fallback=False)
+    try:
+        debug = config_dic.getboolean('DEFAULT', 'debug', fallback=False)
+    except BaseException:
+        debug = False
+
     svc_dic = {}
-    if 'ClientAuth' in config_dic:
-        svc_dic['ClientAuth'] = {}
-        svc_dic['ClientAuth']['address'] = config_dic.get('ClientAuth', 'address', fallback=None)
-        svc_dic['ClientAuth']['port'] = int(config_dic.get('ClientAuth', 'port', fallback='1443'))
+    if 'Daemon' in config_dic:
+        svc_dic['Daemon'] = {}
+        svc_dic['Daemon']['address'] = config_dic.get('Daemon', 'address', fallback=None)
+        try:
+            svc_dic['Daemon']['port'] = int(config_dic.get('Daemon', 'port', fallback='1443'))
+        except ValueError:
+            print('defaulting port to 1443')
+            svc_dic['Daemon']['port'] = 1443
 
     return(debug, svc_dic)
 
@@ -46,6 +54,7 @@ def srv_run(logger, server_class=SecureServer, handler_class=ESTSrvHandler, addr
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
+        logger.info('srv_run(): keyboard interrupt}'.format(address, port))
         pass
     httpd.server_close()
     logger.info('stopping est_proxy on {0}:{1}'.format(address, port))
@@ -59,8 +68,8 @@ if __name__ == '__main__':
     (DEBUG, SVC_DIC) = _config_load(cfg_file=CFG_FILE)
     LOGGER = logger_setup(DEBUG, cfg_file=CFG_FILE)
 
-    if 'ClientAuth' in SVC_DIC:
-        # start est service supporting  ClientAuth
-        srv_run(logger=LOGGER, address=SVC_DIC['ClientAuth']['address'], port=SVC_DIC['ClientAuth']['port'], cfg_file=CFG_FILE)
+    if 'Daemon' in SVC_DIC:
+        # start est service supporting  Daemon
+        srv_run(logger=LOGGER, address=SVC_DIC['Daemon']['address'], port=SVC_DIC['Daemon']['port'], cfg_file=CFG_FILE)
     else:
         LOGGER.error('No est-services enabled in {0}'.format(CFG_FILE))

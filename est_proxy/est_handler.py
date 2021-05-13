@@ -6,7 +6,7 @@ import subprocess
 import importlib
 from http.server import BaseHTTPRequestHandler
 # pylint: disable=E0401
-from est_proxy.helper import config_load, ca_handler_get, logger_setup
+from est_proxy.helper import config_load, ca_handler_get, logger_setup # ,b64_encode, cert_san_get, cert_extensions_get, cert_eku_get
 from est_proxy.version import __version__
 
 class ESTSrvHandler(BaseHTTPRequestHandler):
@@ -40,10 +40,10 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
             self.connection = args[0]
         except BaseException as err_:
             self.logger.error('ESTSrvHandler.__init__ store connection settings failed: {0}'.format(err_))
-        #try:
-        super().__init__(*args, **kwargs)
-        #except BaseException as err_:
-        #    self.logger.error('ESTSrvHandler.__init__ superclass init failed: {0}'.format(err_))
+        try:
+            super().__init__(*args, **kwargs)
+        except BaseException as err_:
+            self.logger.error('ESTSrvHandler.__init__ superclass init failed: {0}'.format(err_))
 
     def _cacerts_get(self):
         """ get ca certificates """
@@ -65,6 +65,12 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
         self.logger.debug('ESTSrvHandler._auth_check()')
         authenticated = False
         if self.connection.session.clientCertChain or self.connection.session.srpUsername:
+            if self.connection.session.clientCertChain:
+                self.logger.info('Client X.509 SHA1 fingerprint: {0}'.format(self.connection.session.clientCertChain.getFingerprint()))
+                # cert_bin = b64_encode(self.logger, self.connection.session.clientCertChain.__dict__['x509List'][0].writeBytes())
+                # serial = cert_eku_get(self.logger, cert_bin)
+            else:
+                self.logger.info('Client SRP username: {0}'.format(self.connection.session.srpUsername))
             authenticated = True
         self.logger.debug('ESTSrvHandler._auth_check() ended with: {0}'.format(authenticated))
         return authenticated
@@ -209,7 +215,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
             try:
                 os.remove(file_name)
             except BaseException as err:
-                print(file_name, err)
+                self.logger.error('ESTSrvHandler._tmpfiles_clean() failed for {0} with error: {1}'.format(file_name, err))
 
     def _opensslcmd_build(self, file_name_list, pkcs7_file):
         """ build ssl cmd """
@@ -353,8 +359,6 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
                     self.logger.debug('ESTSrvHandler.do_POST() end sequence detected.')
                     break
 
-        # self.logger.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n", str(self.path), str(self.headers), post_data.decode('utf-8'))
-        # process requests
         (code, content_type, content_length, encoding, content) = self._post_process(post_data)
 
         # write response

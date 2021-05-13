@@ -20,7 +20,7 @@ The container can be started with the following command
 user@docker-host:~$ mkdir data
 user@docker-host:~$ docker network create est
 <some random id>
-user@docker-host:~$ docker run -d -p 17443:17443 --rm -id --network est --name=est-proxy -v "$(pwd)/data":/usr/local/est_proxy/data/ est_proxy
+user@docker-host:~$ docker run -d -p 17443:17443 --rm -id --network est --name=est_proxy -v "$(pwd)/data":/usr/local/est_proxy/data/ est_proxy
 ```
 
 ## BYOC
@@ -54,7 +54,7 @@ connection_log: False
 [LOGGING]
 log_format: '%(asctime)s - est_proxy - %(levelname)s - %(message)s'
 
-[ClientAuth]
+[Daemon]
 address = 0.0.0.0
 port = 17443
 key_file = /usr/local/est_proxy/data/certs/est-srv.key.pem
@@ -68,5 +68,5 @@ The container should be visible in the list of active containers
 ```bash
 user@docker-host:~$ docker ps
 CONTAINER ID        IMAGE                    COMMAND                  CREATED             STATUS              PORTS                                            NAMES
-c2560b3cef05        grindsa/est_proxy        "/docker-entrypoint.…"   24 minutes ago      Up 23 minutes       0.0.0.0:17443->17443/tcp                         est-proxy
+c2560b3cef05        grindsa/est_proxy        "/docker-entrypoint.…"   24 minutes ago      Up 23 minutes       0.0.0.0:17443->17443/tcp                         est_proxy
 ```

@@ -4,7 +4,7 @@ services:
     build:
       context: ../../.
       dockerfile: examples/Docker/est_proxy/Dockerfile
-    image: est-proxy
+    image: est_proxy
     volumes:
       - type: bind
         source: ./data
