@@ -117,10 +117,13 @@ class CAhandler(object):
         for extension in cert_extension_dic:
             self.logger.debug('adding extension: {0}: {1}: {2}'.format(extension, cert_extension_dic[extension]['critical'], cert_extension_dic[extension]['value']))
             if extension == 'subjectKeyIdentifier':
+                self.logger.info('_certificate_extensions_add(): subjectKeyIdentifier')
                 _tmp_list.append(crypto.X509Extension(convert_string_to_byte(extension), critical=cert_extension_dic[extension]['critical'], value=convert_string_to_byte(cert_extension_dic[extension]['value']), subject=cert))
             elif 'subject' in cert_extension_dic[extension]:
+                self.logger.info('_certificate_extensions_add(): subject')
                 _tmp_list.append(crypto.X509Extension(convert_string_to_byte(extension), critical=cert_extension_dic[extension]['critical'], value=convert_string_to_byte(cert_extension_dic[extension]['value']), subject=cert))
             elif 'issuer' in cert_extension_dic[extension]:
+                self.logger.info('_certificate_extensions_add(): issuer')
                 _tmp_list.append(crypto.X509Extension(convert_string_to_byte(extension), critical=cert_extension_dic[extension]['critical'], value=convert_string_to_byte(cert_extension_dic[extension]['value']), issuer=ca_cert))
             else:
                 _tmp_list.append(crypto.X509Extension(type_name=convert_string_to_byte(extension), critical=cert_extension_dic[extension]['critical'], value=convert_string_to_byte(cert_extension_dic[extension]['value'])))
@@ -135,30 +138,31 @@ class CAhandler(object):
         file_dic = dict(config_load(self.logger, cfg_file=self.openssl_conf))
 
         cert_extention_dic = {}
-        for extension in file_dic['extensions']:
+        if 'extensions' in file_dic:
+            for extension in file_dic['extensions']:
 
-            cert_extention_dic[extension] = {}
-            parameters = file_dic['extensions'][extension].split(',')
+                cert_extention_dic[extension] = {}
+                parameters = file_dic['extensions'][extension].split(',')
 
-            # set crititcal task if applicable
-            if parameters[0] == 'critical':
-                cert_extention_dic[extension]['critical'] = bool(parameters.pop(0))
-            else:
-                cert_extention_dic[extension]['critical'] = False
+                # set crititcal task if applicable
+                if parameters[0] == 'critical':
+                    cert_extention_dic[extension]['critical'] = bool(parameters.pop(0))
+                else:
+                    cert_extention_dic[extension]['critical'] = False
 
-            # remove leading blank from first element
-            parameters[0] = parameters[0].lstrip()
+                # remove leading blank from first element
+                parameters[0] = parameters[0].lstrip()
 
-            # check if we have an issuer option (if so remove it and mark it as to be set)
-            if 'issuer:' in parameters[-1]:
-                cert_extention_dic[extension]['issuer'] = bool(parameters.pop(-1))
+                # check if we have an issuer option (if so remove it and mark it as to be set)
+                if 'issuer:' in parameters[-1]:
+                    cert_extention_dic[extension]['issuer'] = bool(parameters.pop(-1))
 
-            # check if we have an issuer option (if so remove it and mark it as to be set)
-            if 'subject:' in parameters[-1]:
-                cert_extention_dic[extension]['subject'] = bool(parameters.pop(-1))
+                # check if we have an issuer option (if so remove it and mark it as to be set)
+                if 'subject:' in parameters[-1]:
+                    cert_extention_dic[extension]['subject'] = bool(parameters.pop(-1))
 
-            # combine the remaining items and put them in as values
-            cert_extention_dic[extension]['value'] = ','.join(parameters)
+                # combine the remaining items and put them in as values
+                cert_extention_dic[extension]['value'] = ','.join(parameters)
 
         self.logger.debug('CAhandler._certificate_extensions_load() ended')
         return cert_extention_dic
@@ -176,11 +180,15 @@ class CAhandler(object):
 
             # determine filename
             if self.save_cert_as_hex:
+                self.logger.info('convert serial to hex: {0}: {1}'.format(serial, '{:X}'.format(serial)))
                 cert_file = '{:X}'.format(serial)
             else:
                 cert_file = str(serial)
             with open('{0}/{1}.pem'.format(self.cert_save_path, cert_file), 'wb') as fso:
                 fso.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+        else:
+            self.logger.error('CAhandler._certificate_store() handler configuration incomplete: cert_save_path is missing')
+
         self.logger.debug('CAhandler._certificate_store() ended')
 
     def _config_check(self):
@@ -232,7 +240,6 @@ class CAhandler(object):
         """" load config from file """
         self.logger.debug('CAhandler._config_load()')
         config_dic = config_load(self.logger, cfg_file=self.cfg_file)
-
         if 'issuing_ca_key' in config_dic['CAhandler']:
             self.issuer_dict['issuing_ca_key'] = config_dic['CAhandler']['issuing_ca_key']
         if 'issuing_ca_cert' in config_dic['CAhandler']:
@@ -479,7 +486,6 @@ class CAhandler(object):
                     cert_pem = convert_byte_to_string(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
                 else:
                     error = 'urn:ietf:params:acme:badCSR'
-
             except BaseException as err:
                 self.logger.error('CAhandler.enroll() error: {0}'.format(err))
 
