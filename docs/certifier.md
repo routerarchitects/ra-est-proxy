@@ -72,7 +72,7 @@ The response to this call will show a dictionary containing the list of CAs incl
 
 ## CA policy configuration
 
-There may be est-clients creating CSRs without common name (CN) fields. Such CSRs will be refused by Certifier. To overcome this, you need a CA policy as below setting a subject name.
+There might be est-clients creating CSRs without common name (CN) fields. Such CSRs will be refused by Certifier. To overcome this, you need a CA policy as below setting a subject name.
 
 ```policy
 (policy
