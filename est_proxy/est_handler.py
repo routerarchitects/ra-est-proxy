@@ -171,7 +171,7 @@ class ESTSrvHandler(BaseHTTPRequestHandler):
             # remove pkcs7 start end end tags
             pkcs7_struc = pkcs7_struc.replace('-----BEGIN PKCS7-----\n', '')
             # do not remove CR from end tag as it must be part of the content
-            pkcs7_struc = pkcs7_struc.replace('-----END PKCS7-----', '')
+            pkcs7_struc = pkcs7_struc.replace('-----END PKCS7-----', '').rstrip()
         return pkcs7_struc
 
     def _pkcs7_convert(self, ca_certs, pkcs7_clean=True):
