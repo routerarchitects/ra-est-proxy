@@ -1,0 +1,10 @@
+[ req ]
+default_md = sha256
+prompt = no
+distinguished_name = req_distinguished_name
+[ req_distinguished_name ]
+commonName = Routerarchitects Openwifi Demo Birth CA
+countryName = IN
+stateOrProvinceName = UP
+organizationName = Router Architects pvt ltd
+organizationalUnitName  = openwifi

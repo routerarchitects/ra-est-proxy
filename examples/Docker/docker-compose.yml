@@ -1,4 +1,3 @@
-version: '3.2'
 services:
   est-proxy:
     build:
@@ -19,10 +18,10 @@ services:
         target: /etc/localtime
         read_only: true
     ports:
-      - "17443:17443"
+      - "8001:17443"
     restart: always
 
 networks:
   default:
-    external:
-      name: est
+    name: est
+    driver: bridge
