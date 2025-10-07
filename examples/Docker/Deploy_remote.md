@@ -1,15 +1,12 @@
 ## This guide covers:
- **Running est-proxy on AWS EC2**
+ **Running est-proxy on a Cloud/Remote Instance**
 
-### SSH to EC2
+### Connect to Your Remote Instance
 ```bash
-ssh ubuntu@"$EC2_HOST"
-
-# Example:
-ssh ubuntu@openwifi2.routerarchitects.com
-
+ssh <user>@<hostname or IP>  or,
+ssh -i <key> <user>@<hostname or IP>
 ```
-### On EC2, the directory layout should be as:
+### On the cloud instance, the directory layout should be as:
 ```
 ubuntu@openwifi:~/est-proxy-server$ tree
 .
@@ -119,11 +116,11 @@ CFG
 docker-compose up
 ```
 #### NOTE-
-**Ensure your EC2 Security Group allows inbound TCP on the mapped host port 8001 from your source IPs, and that no other service is bound to that port.**
+**Ensure your cloud provider’s firewall or network security settings allow inbound TCP on port 8001 from your source IPs, and that no other service is bound to that port.**
 
 ###  Verify
 
-**From EC2:**
+**From the cloud instance:**
 ```bash
 docker ps
 docker logs -f est-proxy
@@ -134,7 +131,5 @@ curl -vk https://127.0.0.1:8001/.well-known/est/cacerts
 
 **To test the setup is working run this command remotely**
 ```bash
-curl -vk https://$EC2_HOST:8001/.well-known/est/cacerts
-# Example:-
-curl -vk https://openwifi2.routerarchitects.com:8001/.well-known/est/cacerts
+curl -vk https://<REMOTE_HOST>:8001/.well-known/est/cacerts
 ```
