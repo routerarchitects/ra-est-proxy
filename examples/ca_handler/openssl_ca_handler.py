@@ -450,7 +450,7 @@ class CAhandler(object):
                     cert.set_pubkey(req.get_pubkey())
                     cert.set_serial_number(uuid.uuid4().int)
                     cert.set_version(2)
-                    cert.add_extensions(req.get_extensions())
+                    self._add_extensions(cert, req.get_extensions())
 
                     default_extension_list = [
                         crypto.X509Extension(convert_string_to_byte('subjectKeyIdentifier'), False, convert_string_to_byte('hash'), subject=cert),
@@ -461,10 +461,10 @@ class CAhandler(object):
 
                     if cert_extension_dic:
                         try:
-                            cert.add_extensions(self._certificate_extensions_add(cert_extension_dic, cert, ca_cert))
+                            self._add_extensions(cert, self._certificate_extensions_add(cert_extension_dic, cert, ca_cert))
                         except BaseException as err_:
                             self.logger.error('CAhandler.enroll() error while loading extensions form file. Use default set.\nerror: {0}'.format(err_))
-                            cert.add_extensions(default_extension_list)
+                            self._add_extensions(cert, default_extension_list)
                     else:
                         # add keyUsage if it does not exist in CSR
                         ku_is_in = False
@@ -475,7 +475,7 @@ class CAhandler(object):
                             default_extension_list.append(crypto.X509Extension(convert_string_to_byte('keyUsage'), True, convert_string_to_byte('digitalSignature,keyEncipherment')))
 
                         # add default extensions
-                        cert.add_extensions(default_extension_list)
+                        self._add_extensions(cert, default_extension_list)
 
                     cert.sign(ca_key, 'sha256')
 
@@ -579,3 +579,13 @@ class CAhandler(object):
 
         self.logger.debug('CAhandler.trigger() ended with error: {0}'.format(error))
         return (error, cert_bundle, cert_raw)
+
+    def _add_extensions(self, cert, exts):
+        """Add extensions to an X509 certificate across PyOpenSSL versions."""
+        if not exts:
+            return
+        for ext in exts:
+            if hasattr(cert, "add_extension"):
+                cert.add_extension(ext)
+            elif hasattr(cert, "add_extensions"):
+                cert.add_extensions([ext])

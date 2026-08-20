@@ -1,4 +1,5 @@
-pyOpenssl
+pyOpenSSL==21.0.0
+cryptography==38.0.4
 requests
 configparser
 tlslite-ng==0.8.0a40
