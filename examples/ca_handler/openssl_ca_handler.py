@@ -584,8 +584,14 @@ class CAhandler(object):
         """Add extensions to an X509 certificate across PyOpenSSL versions."""
         if not exts:
             return
-        for ext in exts:
-            if hasattr(cert, "add_extension"):
+
+        if hasattr(cert, "add_extensions"):
+            cert.add_extensions(exts)
+            return
+
+        if hasattr(cert, "add_extension"):
+            for ext in exts:
                 cert.add_extension(ext)
-            elif hasattr(cert, "add_extensions"):
-                cert.add_extensions([ext])
+            return
+
+        raise AttributeError("X509 object supports neither add_extension nor add_extensions")
